@@ -1,0 +1,8 @@
+# List of source files containing translatable strings.
+# Please keep this file sorted alphabetically.
+data/com.github.kenayake.ProcessManager.desktop.in
+data/com.github.kenayake.ProcessManager.metainfo.xml.in
+data/com.github.kenayake.ProcessManager.gschema.xml
+src/main.c
+src/process-manager-window.c
+src/process-manager-window.ui

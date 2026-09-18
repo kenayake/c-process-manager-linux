@@ -1,0 +1,3 @@
+[D-BUS Service]
+Name=com.github.kenayake.ProcessManager
+Exec=@bindir@/process-manager --gapplication-service

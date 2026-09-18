@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Process-manager
+Exec=process-manager
+Icon=com.github.kenayake.ProcessManager
+Terminal=false
+Type=Application
+Categories=Utility;
+Keywords=GTK;
+StartupNotify=true
+DBusActivatable=true
