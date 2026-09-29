@@ -1,3 +1,4 @@
+#include "config.h"
 #include "process-item.h"
 #include "glib-object.h"
 #include "glib.h"
@@ -8,6 +9,8 @@ struct _ProcessItem {
   GObject parent_instance;
 
   gchar *name;
+  pid_t pid;
+  pid_t pgid;
   gchar *status;
   gdouble cpu;
   gdouble memory;
@@ -171,7 +174,7 @@ ProcessItem *process_item_new(const gchar *name, const gchar *status,
                               const gchar *priority) {
   ProcessItem *process_item = g_object_new(
       PROCESS_TYPE_ITEM, "name", name, "status", status, "cpu", cpu, "memory",
-      memory, "disk", disk, "user", user, "priority", priority);
+      memory, "disk", disk, "user", user, "priority", priority, NULL);
 
   return process_item;
 }

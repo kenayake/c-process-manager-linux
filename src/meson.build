@@ -2,7 +2,9 @@ process_manager_sources = [
   'main.c',
   'process-manager-application.c',
   'process-manager-window.c',
-  'core/process-item.c'
+  'view/process-view.c',
+  'core/process-item.c',
+  'core/process-model.c',
 ]
 
 process_manager_deps = [

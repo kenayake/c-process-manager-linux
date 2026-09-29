@@ -19,30 +19,41 @@
  */
 
 #include "config.h"
+#include "glib-object.h"
+#include "glib.h"
+#include "gtk/gtk.h"
+#include "gtk/gtkshortcut.h"
+#include "view/process-view.h"
 
 #include "process-manager-window.h"
 
-struct _ProcessManagerWindow
-{
-	GtkApplicationWindow  parent_instance;
+struct _ProcessManagerWindow {
+  GtkApplicationWindow parent_instance;
 
-	/* Template widgets */
-	GtkLabel            *label;
+  /* Template widgets */
+  GtkWidget *scrolled_window;
 };
 
-G_DEFINE_FINAL_TYPE (ProcessManagerWindow, process_manager_window, GTK_TYPE_APPLICATION_WINDOW)
+G_DEFINE_FINAL_TYPE(ProcessManagerWindow, process_manager_window,
+                    GTK_TYPE_APPLICATION_WINDOW)
 
 static void
-process_manager_window_class_init (ProcessManagerWindowClass *klass)
-{
-	GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
+process_manager_window_class_init(ProcessManagerWindowClass *klass) {
+  GtkWidgetClass *widget_class = GTK_WIDGET_CLASS(klass);
 
-	gtk_widget_class_set_template_from_resource (widget_class, "/com/github/kenayake/ProcessManager/process-manager-window.ui");
-	gtk_widget_class_bind_template_child (widget_class, ProcessManagerWindow, label);
+  gtk_widget_class_set_template_from_resource(
+      widget_class,
+      "/com/github/kenayake/ProcessManager/process-manager-window.ui");
+  gtk_widget_class_bind_template_child(widget_class, ProcessManagerWindow,
+                                       scrolled_window);
 }
 
-static void
-process_manager_window_init (ProcessManagerWindow *self)
-{
-	gtk_widget_init_template (GTK_WIDGET (self));
+static void process_manager_window_init(ProcessManagerWindow *self) {
+  GtkWidget *process_view;
+  gtk_widget_init_template(GTK_WIDGET(self));
+
+  process_view = process_view_new();
+
+  gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(self->scrolled_window),
+                                process_view);
 }
