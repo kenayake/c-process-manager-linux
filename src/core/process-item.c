@@ -1,5 +1,6 @@
 #include "config.h"
 #include "process-item.h"
+#include "gio/gio.h"
 #include "glib-object.h"
 #include "glib.h"
 #include "glibconfig.h"
@@ -17,6 +18,9 @@ struct _ProcessItem {
   gdouble disk;
   gchar *user;
   gchar *priority;
+  gboolean has_children;
+
+  GListStore *children;
 };
 
 G_DEFINE_FINAL_TYPE(ProcessItem, process_item, G_TYPE_OBJECT)
@@ -124,6 +128,8 @@ static void process_item_finalize(GObject *object) {
   g_free(self->status);
   g_free(self->user);
   g_free(self->priority);
+  g_clear_object (&self->children);
+  G_OBJECT_CLASS (process_item_parent_class)->finalize (object);
 }
 
 static void process_item_class_init(ProcessItemClass *klass) {
@@ -171,10 +177,34 @@ static void process_item_init(ProcessItem *self) {
 ProcessItem *process_item_new(const gchar *name, const gchar *status,
                               const gdouble cpu, const gdouble memory,
                               const gdouble disk, const gchar *user,
-                              const gchar *priority) {
+                              const gchar *priority, pid_t pid, pid_t pgid, gboolean has_children) {
   ProcessItem *process_item = g_object_new(
       PROCESS_TYPE_ITEM, "name", name, "status", status, "cpu", cpu, "memory",
       memory, "disk", disk, "user", user, "priority", priority, NULL);
+  
+  process_item->pid = pid;
+  process_item->pgid = pgid;
+  
+  if (has_children) {
+    process_item->children = g_list_store_new (PROCESS_TYPE_ITEM);
+    process_item->has_children = TRUE;
+  } else {
+    process_item->has_children = FALSE;
+  }
 
   return process_item;
+}
+
+GListModel *process_item_get_children(gpointer item, gpointer user_data) {
+  ProcessItem *process_item = PROCESS_ITEM(item);
+
+  if (process_item->has_children) {
+    return G_LIST_MODEL(g_object_ref(process_item->children));
+  }
+
+  return NULL;
+}
+
+void process_item_append_child(ProcessItem *item, ProcessItem *child) {
+  g_list_store_append(item->children, child);
 }

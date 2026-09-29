@@ -2,6 +2,7 @@
 #include "process-model.h"
 #include "core/process-item.h"
 #include "gio/gio.h"
+#include "glib-object.h"
 #include <gtk/gtk.h>
 
 GListStore *store;
@@ -10,23 +11,32 @@ static gboolean capture_processes(GError **error) {
   // Dummy implementation
   // TODO: Implement actual process capture with /proc
   ProcessItem *process;
+  ProcessItem *child;
 
   process = process_item_new("Overwatch.exe", "R", 40.0, 3000.0, 0.1,
-                             "kenayake", "Real-Time");
+                             "kenayake", "Real-Time", 23, 23, FALSE);
   g_list_store_append(store, process);
   g_object_unref(process);
 
-  process = process_item_new("systemd", "R", 0.5, 10.0, 0.1, "root", "Normal");
+  process = process_item_new("systemd", "R", 0.5, 10.0, 0.1, "root", "Normal", 1, 1, FALSE);
   g_list_store_append(store, process);
   g_object_unref(process);
 
-  process = process_item_new("vscode.exe", "S", 1.0, 100.0, 0.0, "kenayake",
-                             "Normal");
+  process = process_item_new("explorer.exe", "S", 1.0, 100.0, 0.0, "kenayake",
+                             "Normal", 12, 12, FALSE);
   g_list_store_append(store, process);
   g_object_unref(process);
 
-  process = process_item_new("Overwatch.exe", "R", 40.0, 3000.0, 0.1,
-                             "kenayake", "Normal");
+  process = process_item_new("chrome.exe", "S", 2.0, 1500.0, 1.0,
+                             "kenayake", "Normal", 14, 14, TRUE);
+
+  child = process_item_new("tab1", "S", 0, 300, 0, "kenayake", "Low", 15, 14, FALSE);
+  process_item_append_child(process, child);
+  g_object_unref(child);
+  child = process_item_new("tab2", "S", 0, 600, 0.1, "kenayake", "Low", 16, 14, FALSE);
+  process_item_append_child(process, child);
+  g_object_unref(child);
+
   g_list_store_append(store, process);
   g_object_unref(process);
 
