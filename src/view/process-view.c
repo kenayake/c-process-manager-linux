@@ -2,10 +2,12 @@
 #include "config.h"
 #include "core/process-item.h"
 #include "core/process-model.h"
+#include "gio/gio.h"
 #include "glib-object.h"
 #include "glib.h"
 #include "glibconfig.h"
 #include "gtk/gtkshortcut.h"
+#include "gtk/gtksingleselection.h"
 #include <gtk/gtk.h>
 
 typedef struct {
@@ -85,7 +87,7 @@ static void bind_numeric_column(GtkSignalListItemFactory *factory,
   ProcessItem *process;
   GtkWidget *label;
   gdouble value;
-  gchar text[32];
+  gchar text[16];
 
   const UserData *data = user_data;
 
@@ -112,7 +114,7 @@ static GtkColumnViewColumn *create_first_column(const gchar *prop_name,
   GtkColumnViewColumn *column;
   GtkExpression *expr;
   GtkSorter *string_sorter;
-  UserData *user_data = g_new(UserData, 1);
+  UserData *user_data = g_new0(UserData, 1);
   user_data->name = prop_name;
   user_data->suffix = NULL;
 
@@ -147,7 +149,7 @@ static GtkColumnViewColumn *create_numeric_column(const gchar *prop_name,
   GtkColumnViewColumn *column;
   GtkExpression *expr;
   GtkSorter *numeric_sorter;
-  UserData *user_data = g_new(UserData, 1);
+  UserData *user_data = g_new0(UserData, 1);
   user_data->name = prop_name;
   user_data->suffix = suffix;
 
@@ -180,7 +182,7 @@ static GtkColumnViewColumn *create_string_column(const gchar *prop_name,
   GtkColumnViewColumn *column;
   GtkExpression *expr;
   GtkSorter *string_sorter;
-  UserData *user_data = g_new(UserData, 1);
+  UserData *user_data = g_new0(UserData, 1);
   user_data->name = prop_name;
   user_data->suffix = NULL;
 
@@ -207,6 +209,34 @@ static GtkColumnViewColumn *create_string_column(const gchar *prop_name,
   return column;
 }
 
+// TEMP
+static gboolean
+on_timeout_tick (gpointer user_data)
+{
+    GtkColumnView *view = GTK_COLUMN_VIEW(user_data);
+    GListModel *model = process_view_get_model(view);
+
+    g_info("timeout started");
+
+    if (model != NULL) {
+      guint n_items;
+
+      process_model_refresh(G_LIST_STORE(model));
+
+      n_items = g_list_model_get_n_items(model);
+      g_list_model_items_changed(model, 0, n_items, n_items);
+    }
+
+    // Return TRUE to keep running, or FALSE to stop the timer permanently
+    return G_SOURCE_CONTINUE; 
+}
+
+void on_view_map(GtkWidget *self, gpointer user_data) {
+  GtkColumnView *view = GTK_COLUMN_VIEW(self);
+
+  g_timeout_add(1000, on_timeout_tick, view); // replace with interval setting
+} 
+
 GtkWidget *process_view_new(void) {
   GListModel          *model;
   GtkWidget           *view;
@@ -219,7 +249,7 @@ GtkWidget *process_view_new(void) {
   // Get model
   model = process_model_new();
   if (model == NULL) {
-    return gtk_label_new("No processes");
+    return gtk_label_new("Failed to fetch processes");
   }
 
   // Wrap model inside tree list model
@@ -273,5 +303,21 @@ GtkWidget *process_view_new(void) {
   gtk_column_view_append_column(GTK_COLUMN_VIEW(view),
                                 create_string_column("priority", "Priority"));
 
+  g_signal_connect(view, "map", G_CALLBACK(on_view_map), NULL);
+
   return view;
+}
+
+GListModel *process_view_get_model(GtkColumnView *view) {
+  GListModel          *process_model;
+  GListModel          *tree_model;
+  GListModel          *sort_model;
+  GtkSelectionModel   *selection_model;
+  
+  selection_model = gtk_column_view_get_model(view);
+  sort_model = gtk_single_selection_get_model(GTK_SINGLE_SELECTION(selection_model));
+  tree_model = gtk_sort_list_model_get_model(GTK_SORT_LIST_MODEL(sort_model));
+  process_model = gtk_tree_list_model_get_model(GTK_TREE_LIST_MODEL(tree_model));
+
+  return process_model;
 }

@@ -5,6 +5,10 @@ process_manager_sources = [
   'view/process-view.c',
   'core/process-item.c',
   'core/process-model.c',
+  'core/process-raw.c',
+  'util/timespec-type.c',
+  'util/disk-usage-type.c',
+  'util/cpu-usage-type.c',
 ]
 
 process_manager_deps = [
