@@ -6,7 +6,6 @@
 typedef struct {
     guint64 read_bytes;
     guint64 write_bytes;
-    GTimespec timestamp;
 } DiskUsage;
 
 #define TYPE_DISK_USAGE (disk_usage_get_type ())

@@ -36,3 +36,5 @@ void process_raw_set_child(ProcessRaw *process);
 void process_raw_copy(ProcessRaw *source_data, ProcessRaw *dest_data);
 
 void process_raw_print_hash_table(GHashTable *processes);
+
+void process_raw_add_child_metrics_to_parent(ProcessRaw *child, ProcessRaw *parent);

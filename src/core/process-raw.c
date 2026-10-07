@@ -131,9 +131,6 @@ static gboolean parse_io(long pid, ProcessRaw *data) {
   g_autofree gchar *filepath;
   gsize length = 0;
 
-  // Get current time
-  clock_gettime(CLOCK_MONOTONIC, &data->disk_usage.timestamp);
-
   filepath = g_strdup_printf("/proc/%ld/io", pid);
 
   // if proc/pid/io is readable
@@ -266,4 +263,12 @@ void process_raw_print_hash_table(GHashTable *processes) {
   g_return_if_fail(processes != NULL);
 
   g_hash_table_foreach(processes, process_raw_print,  GUINT_TO_POINTER(0));
+}
+
+void process_raw_add_child_metrics_to_parent(ProcessRaw *child, ProcessRaw *parent) {
+  parent->rss += child->rss;
+  parent->cpu_usage.stime += child->cpu_usage.stime;
+  parent->cpu_usage.utime += child->cpu_usage.utime;
+  parent->disk_usage.read_bytes += child->disk_usage.read_bytes;
+  parent->disk_usage.write_bytes += child->disk_usage.write_bytes;
 }

@@ -243,8 +243,6 @@ ProcessItem *process_item_new(pid_t pid, gboolean has_children) {
 
   ProcessItem *process_item = g_object_new(PROCESS_TYPE_ITEM, "pid", pid, NULL);
 
-  clock_gettime(CLOCK_MONOTONIC, &process_item->disk_usage.timestamp);
-
   if (has_children) {
     process_item->children = g_list_store_new(PROCESS_TYPE_ITEM);
     process_item->has_children = TRUE;
@@ -265,8 +263,6 @@ ProcessItem *process_item_new_with_data(const gchar *name, const gchar *status,
       g_object_new(PROCESS_TYPE_ITEM, "name", name, "status", status, "cpu",
                    cpu, "memory", memory, "disk", disk, "user", user,
                    "priority", priority, "pid", pid, "pgid", pgid, NULL);
-
-  clock_gettime(CLOCK_MONOTONIC, &process_item->disk_usage.timestamp);
 
   if (has_children) {
     process_item->children = g_list_store_new(PROCESS_TYPE_ITEM);
