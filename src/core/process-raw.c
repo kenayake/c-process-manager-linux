@@ -1,8 +1,10 @@
 #include "core/process-raw.h"
 #include "gio/gio.h"
+#include "glib-object.h"
 #include "glib.h"
 #include "glibconfig.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -14,19 +16,12 @@ enum {
 } ErrorCodes;
 
 static gchar *parse_comm(gchar *str) {
-  g_autoptr(GRegex) regex;
-  g_autofree GMatchInfo *match_info;
-  gchar *match;
+  const gchar *open = strchr(str, '(');
+  const gchar *close = strrchr(str, ')');
 
-  regex = g_regex_new("\\((.*)\\)", 0, 0, NULL);
-
-  if (g_regex_match(regex, str, 0, &match_info)) {
-    match = g_match_info_fetch(match_info, 1);
-  } else {
-    match = str;
-  }
-
-  return match;
+  if (open && close && close > open)
+    return g_strndup(open + 1, close - open - 1);
+  return g_strdup(str);
 }
 
 static gboolean parse_stat(long pid, ProcessRaw *data, GError **error) {
@@ -96,6 +91,9 @@ static gboolean parse_uid(long pid, ProcessRaw *data, GError **error) {
       sscanf(line + 4, "%d %d %d %d", &ruid, &euid, &suid, &fsuid);
       data->uid = ruid;
 
+      g_object_unref(data_stream);
+      g_object_unref(in_stream);
+      g_object_unref(file);
       return TRUE;
     }
   }
@@ -142,7 +140,7 @@ static gboolean parse_io(long pid, ProcessRaw *data) {
   if (g_file_get_contents(filepath, &contents, &length, &error)) {
 
     g_autoptr(GRegex) regex;
-    GMatchInfo *match_info;
+    g_autoptr(GMatchInfo) match_info;
     gchar *match;
 
     // Parse read_bytes and write_bytes using regex
@@ -179,8 +177,8 @@ static gboolean parse_io(long pid, ProcessRaw *data) {
 void process_raw_free(gpointer data) {
   ProcessRaw *process = (ProcessRaw *)data;
 
-  g_free(process->comm);
-  g_free(process->state);
+  if(process->comm != NULL) g_free(process->comm);
+  if(process->state != NULL) g_free(process->state);
 
   if (process->has_children) {
     g_hash_table_unref(process->children);
@@ -189,20 +187,23 @@ void process_raw_free(gpointer data) {
   g_free(process);
 }
 
-ProcessRaw *process_raw_scan(long *pid, GError **error) {
+ProcessRaw *process_raw_scan(long pid, GError **error) {
   ProcessRaw *process_raw = g_new0(ProcessRaw, 1);
 
-  pid_t process_id = *pid;
+  pid_t process_id = pid;
 
   if (parse_stat(process_id, process_raw, error) == FALSE) {
+    process_raw_free(process_raw);
     return NULL;
   }
 
   if (parse_statm(process_id, process_raw, error) == FALSE) {
+    process_raw_free(process_raw);
     return NULL;
   }
 
   if (parse_uid(process_id, process_raw, error) == FALSE) {
+    process_raw_free(process_raw);
     return NULL;
   }
 
@@ -226,17 +227,22 @@ void process_raw_set_group_leader(ProcessRaw *process) {
 }
 
 void process_raw_set_child(ProcessRaw *process) {
+  if (process->has_children == TRUE) {
+    g_hash_table_unref(process->children);
+  }
   process->has_children = FALSE;
   process->children = NULL;
 }
 
 void process_raw_copy(ProcessRaw *source_data, ProcessRaw *dest_data) {
   dest_data->pgrp = source_data->pgrp;
-  dest_data->comm = source_data->comm;
+  free(dest_data->comm);
+  dest_data->comm = g_strdup(source_data->comm);
   dest_data->disk_usage = source_data->disk_usage;
   dest_data->nice = source_data->nice;
   dest_data->priority = source_data->priority;
-  dest_data->state = source_data->state;
+  free(dest_data->state);
+  dest_data->state = g_strdup(source_data->state);
   dest_data->rss = source_data->rss;
 }
 
@@ -246,8 +252,8 @@ static void process_raw_print(gpointer key, gpointer data, gpointer user_data) {
 
   g_autofree gchar *prefix = g_strnfill(indent * 2, ' ');
 
-  g_info("%sPID: %d | Name: %s | status: %s | Children: %u",
-         prefix, process->pid, process->comm ? process->comm : "(unknown)", process->state,
+  g_info("%sPID: %d | Name: %s | Mem: %0.0f | status: %s | Children: %u",
+         prefix, process->pid, process->comm ? process->comm : "(unknown)", process->rss, process->state,
          process->has_children ? g_hash_table_size(process->children) : 0);
 
   if (process->has_children) {

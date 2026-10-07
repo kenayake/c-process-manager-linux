@@ -23,7 +23,7 @@ typedef struct {
   GHashTable *children;
 } ProcessRaw;
 
-ProcessRaw *process_raw_scan(long *pid, GError **error);
+ProcessRaw *process_raw_scan(long pid, GError **error);
 
 ProcessRaw *process_raw_new(long *pid);
 

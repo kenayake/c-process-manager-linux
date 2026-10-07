@@ -36,4 +36,6 @@ void process_item_set_single(ProcessItem *item);
 
 void process_item_set_parent(ProcessItem *item);
 
+void process_item_print_model(GListModel *list, const gchar *prefix);
+
 G_END_DECLS
