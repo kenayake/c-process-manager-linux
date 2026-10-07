@@ -76,6 +76,9 @@ static gboolean first_pass(GHashTable *exList, GError **error) {
             existing_group_leader->children = g_hash_table_new_full(g_int64_hash, g_int64_equal, g_free,
                                             process_raw_free);
           }
+
+          // Add child stats to parent
+          process_raw_add_child_metrics_to_parent(process_raw, existing_group_leader);
                                           
           // Append child to existing group leader
           g_hash_table_insert(existing_group_leader->children, g_memdup2(pid, sizeof *pid),
@@ -86,6 +89,9 @@ static gboolean first_pass(GHashTable *exList, GError **error) {
           ProcessRaw *group_leader;
           if ((group_leader = process_raw_scan(*pgrp, error)) != NULL) {
             process_raw_set_group_leader(group_leader);
+
+            // Add child stats to parent
+            process_raw_add_child_metrics_to_parent(process_raw, group_leader);
 
             // Append child to the new group leader and insert to exList
             g_hash_table_insert(group_leader->children, g_memdup2(pid, sizeof *pid), process_raw);
