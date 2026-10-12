@@ -1,7 +1,6 @@
 #pragma once
 
 #include "glib-object.h"
-#include "util/timespec-type.h"
 
 typedef struct {
     guint64 read_bytes;

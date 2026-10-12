@@ -49,11 +49,11 @@ process_manager_window_class_init(ProcessManagerWindowClass *klass) {
 }
 
 static void process_manager_window_init(ProcessManagerWindow *self) {
-  GtkWidget *process_view;
+  PmProcessView *process_view;
   gtk_widget_init_template(GTK_WIDGET(self));
 
   process_view = process_view_new();
 
   gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(self->scrolled_window),
-                                process_view);
+                                GTK_WIDGET(process_view_get_view(process_view)));
 }

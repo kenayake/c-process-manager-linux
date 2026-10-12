@@ -2,6 +2,7 @@
 #include "config.h"
 #include "core/process-item.h"
 #include "core/process-model.h"
+#include "core/system-status.h"
 #include "gio/gio.h"
 #include "glib-object.h"
 #include "glib.h"
@@ -9,34 +10,39 @@
 #include "gtk/gtkshortcut.h"
 #include "gtk/gtksingleselection.h"
 #include <gtk/gtk.h>
+#include <stdio.h>
 
 typedef struct {
   const gchar *name;
   const gchar *suffix;
 } UserData;
 
-gboolean bind_numeric_to_label(
-  GBinding* binding,
-  const GValue* from_value,
-  GValue* to_value,
-  gpointer user_data
-) {
+struct _PmProcessView {
+  GObject parent_instance;
+
+  GListModel *model;
+  PmSystemStatus *sys_stat;
+  GtkWidget *column_view;
+};
+
+G_DEFINE_FINAL_TYPE(PmProcessView, pm_process_view, G_TYPE_OBJECT)
+
+gboolean bind_numeric_to_label(GBinding *binding, const GValue *from_value,
+                               GValue *to_value, gpointer user_data) {
   UserData *data = user_data;
 
   gdouble numeric_value = g_value_get_double(from_value);
 
-  const g_autofree gchar *label_text = g_strdup_printf(data->suffix != NULL ? "%.1f %s" : "%.1f", numeric_value, data->suffix);
+  const g_autofree gchar *label_text = g_strdup_printf(
+      data->suffix != NULL ? "%.1f %s" : "%.1f", numeric_value, data->suffix);
 
   g_value_set_string(to_value, label_text);
 
   return TRUE;
 }
 
-static void setup_expander_column(
-  GtkSignalListItemFactory *factory,
-  GtkListItem *list_item, 
-  gpointer user_data
-) {
+static void setup_expander_column(GtkSignalListItemFactory *factory,
+                                  GtkListItem *list_item, gpointer user_data) {
   GtkWidget *expander;
   GtkWidget *label;
 
@@ -50,7 +56,7 @@ static void setup_expander_column(
 static void bind_expander_column(GtkSignalListItemFactory *factory,
                                  GtkListItem *list_item, gpointer user_data) {
   GtkTreeListRow *row;
-  ProcessItem *process;
+  PmProcessItem *process;
   GtkWidget *expander;
   GtkWidget *label;
   g_autofree gchar *key;
@@ -59,7 +65,7 @@ static void bind_expander_column(GtkSignalListItemFactory *factory,
   UserData *data = user_data;
 
   row = GTK_TREE_LIST_ROW(gtk_list_item_get_item(list_item));
-  process = PROCESS_ITEM(gtk_tree_list_row_get_item(row));
+  process = PM_PROCESS_ITEM(gtk_tree_list_row_get_item(row));
   expander = gtk_list_item_get_child(list_item);
   label = gtk_tree_expander_get_child(GTK_TREE_EXPANDER(expander));
 
@@ -67,11 +73,8 @@ static void bind_expander_column(GtkSignalListItemFactory *factory,
   // g_object_get(process, data->name, &text, NULL);
   // gtk_label_set_text(GTK_LABEL(label), text);
 
-  binding = g_object_bind_property(
-    process, data->name,
-    label, "label",
-    G_BINDING_SYNC_CREATE
-  );
+  binding = g_object_bind_property(process, data->name, label, "label",
+                                   G_BINDING_SYNC_CREATE);
 
   key = g_strdup_printf("%s-key", data->name);
 
@@ -92,15 +95,15 @@ static void setup_generic_column(GtkSignalListItemFactory *factory,
 static void bind_string_column(GtkSignalListItemFactory *factory,
                                GtkListItem *list_item, gpointer user_data) {
   GtkTreeListRow *row;
-  ProcessItem *process;
+  PmProcessItem *process;
   GtkWidget *label;
   g_autofree gchar *key;
   GBinding *binding;
 
   UserData *data = user_data;
 
-  row = GTK_TREE_LIST_ROW (gtk_list_item_get_item (list_item));
-  process = gtk_tree_list_row_get_item (row);
+  row = GTK_TREE_LIST_ROW(gtk_list_item_get_item(list_item));
+  process = gtk_tree_list_row_get_item(row);
   label = gtk_list_item_get_child(list_item);
 
   if (process == NULL) {
@@ -108,11 +111,8 @@ static void bind_string_column(GtkSignalListItemFactory *factory,
     return;
   }
 
-  binding = g_object_bind_property(
-    process, data->name,
-    label, "label",
-    G_BINDING_SYNC_CREATE
-  );
+  binding = g_object_bind_property(process, data->name, label, "label",
+                                   G_BINDING_SYNC_CREATE);
 
   // g_object_get(process, data->name, &text, NULL);
   key = g_strdup_printf("%s-key", data->name);
@@ -127,7 +127,7 @@ static void bind_string_column(GtkSignalListItemFactory *factory,
 static void bind_numeric_column(GtkSignalListItemFactory *factory,
                                 GtkListItem *list_item, gpointer user_data) {
   GtkTreeListRow *row;
-  ProcessItem *process;
+  PmProcessItem *process;
   GtkWidget *label;
   // gdouble value;
   g_autofree gchar *key;
@@ -135,8 +135,8 @@ static void bind_numeric_column(GtkSignalListItemFactory *factory,
 
   UserData *data = user_data;
 
-  row = GTK_TREE_LIST_ROW (gtk_list_item_get_item (list_item));
-  process = gtk_tree_list_row_get_item (row);
+  row = GTK_TREE_LIST_ROW(gtk_list_item_get_item(list_item));
+  process = gtk_tree_list_row_get_item(row);
   label = gtk_list_item_get_child(list_item);
 
   if (process == NULL) {
@@ -145,14 +145,8 @@ static void bind_numeric_column(GtkSignalListItemFactory *factory,
   }
 
   binding = g_object_bind_property_full(
-    process, data->name,
-    label, "label",
-    G_BINDING_SYNC_CREATE,
-    bind_numeric_to_label,
-    NULL,
-    data,
-    NULL
-  );
+      process, data->name, label, "label", G_BINDING_SYNC_CREATE,
+      bind_numeric_to_label, NULL, data, NULL);
 
   key = g_strdup_printf("%s-key", data->name);
 
@@ -169,7 +163,7 @@ static void bind_numeric_column(GtkSignalListItemFactory *factory,
 }
 
 static void unbind_generic_column(GtkSignalListItemFactory *factory,
-                                GtkListItem *list_item, gpointer user_data) {
+                                  GtkListItem *list_item, gpointer user_data) {
   UserData *data = user_data;
   g_autofree gchar *key = g_strdup_printf("%s-key", data->name);
 
@@ -197,7 +191,8 @@ static GtkColumnViewColumn *create_first_column(const gchar *prop_name,
   g_signal_connect(factory, "bind", G_CALLBACK(bind_expander_column),
                    user_data);
 
-  g_signal_connect(factory, "unbind", G_CALLBACK(unbind_generic_column), user_data);               
+  g_signal_connect(factory, "unbind", G_CALLBACK(unbind_generic_column),
+                   user_data);
 
   column = gtk_column_view_column_new(title, GTK_LIST_ITEM_FACTORY(factory));
 
@@ -206,7 +201,7 @@ static GtkColumnViewColumn *create_first_column(const gchar *prop_name,
   gtk_column_view_column_set_expand(column, TRUE);
 
   // Setup expression-based sorter
-  expr = gtk_property_expression_new(PROCESS_TYPE_ITEM, NULL, prop_name);
+  expr = gtk_property_expression_new(PM_TYPE_PROCESS_ITEM, NULL, prop_name);
   string_sorter = GTK_SORTER(gtk_string_sorter_new(expr));
 
   // Bind the sorter to the column
@@ -233,7 +228,8 @@ static GtkColumnViewColumn *create_numeric_column(const gchar *prop_name,
 
   g_signal_connect(factory, "bind", G_CALLBACK(bind_numeric_column), user_data);
 
-  g_signal_connect(factory, "unbind", G_CALLBACK(unbind_generic_column), user_data);
+  g_signal_connect(factory, "unbind", G_CALLBACK(unbind_generic_column),
+                   user_data);
 
   column = gtk_column_view_column_new(title, GTK_LIST_ITEM_FACTORY(factory));
 
@@ -242,7 +238,7 @@ static GtkColumnViewColumn *create_numeric_column(const gchar *prop_name,
   gtk_column_view_column_set_expand(column, TRUE);
 
   // Setup expression-based sorter
-  expr = gtk_property_expression_new(PROCESS_TYPE_ITEM, NULL, prop_name);
+  expr = gtk_property_expression_new(PM_TYPE_PROCESS_ITEM, NULL, prop_name);
   numeric_sorter = GTK_SORTER(gtk_numeric_sorter_new(expr));
 
   // Bind the sorter to the column
@@ -268,7 +264,8 @@ static GtkColumnViewColumn *create_string_column(const gchar *prop_name,
 
   g_signal_connect(factory, "bind", G_CALLBACK(bind_string_column), user_data);
 
-  g_signal_connect(factory, "unbind", G_CALLBACK(unbind_generic_column), user_data);
+  g_signal_connect(factory, "unbind", G_CALLBACK(unbind_generic_column),
+                   user_data);
 
   column = gtk_column_view_column_new(title, GTK_LIST_ITEM_FACTORY(factory));
 
@@ -277,7 +274,7 @@ static GtkColumnViewColumn *create_string_column(const gchar *prop_name,
   gtk_column_view_column_set_expand(column, TRUE);
 
   // Setup expression-based sorter
-  expr = gtk_property_expression_new(PROCESS_TYPE_ITEM, NULL, prop_name);
+  expr = gtk_property_expression_new(PM_TYPE_PROCESS_ITEM, NULL, prop_name);
   string_sorter = GTK_SORTER(gtk_string_sorter_new(expr));
 
   // Bind the sorter to the column
@@ -287,84 +284,75 @@ static GtkColumnViewColumn *create_string_column(const gchar *prop_name,
   return column;
 }
 
-static
-GtkSorter *process_view_get_sorter(GtkColumnView *view) {
-  GListModel          *sort_model;
-  GtkSelectionModel   *selection_model;
+static GtkSorter *process_view_get_sorter(GtkColumnView *view) {
+  GListModel *sort_model;
+  GtkSelectionModel *selection_model;
   GtkSorter *tree_sorter;
-  
+
   selection_model = gtk_column_view_get_model(view);
-  sort_model = gtk_single_selection_get_model(GTK_SINGLE_SELECTION(selection_model));
+  sort_model =
+      gtk_single_selection_get_model(GTK_SINGLE_SELECTION(selection_model));
   tree_sorter = gtk_sort_list_model_get_sorter(GTK_SORT_LIST_MODEL(sort_model));
 
   return tree_sorter;
 }
 
-static
-GListModel *process_view_get_model(GtkColumnView *view) {
-  GListModel          *process_model;
-  GListModel          *tree_model;
-  GListModel          *sort_model;
-  GtkSelectionModel   *selection_model;
-  
-  selection_model = gtk_column_view_get_model(view);
-  sort_model = gtk_single_selection_get_model(GTK_SINGLE_SELECTION(selection_model));
-  tree_model = gtk_sort_list_model_get_model(GTK_SORT_LIST_MODEL(sort_model));
-  process_model = gtk_tree_list_model_get_model(GTK_TREE_LIST_MODEL(tree_model));
+static gboolean on_timeout_tick(gpointer user_data) {
+  PmProcessView *view = user_data;
+  GtkSorter *sort_model = process_view_get_sorter(GTK_COLUMN_VIEW(view->column_view));
+  GListModel *model = view->model;
+  guint64 *cpu_delta;
+  // g_info("timeout started");
 
-  return process_model;
-}
+  if (model != NULL) {
 
-// TEMP
-static gboolean
-on_timeout_tick (gpointer user_data)
-{
-    GtkColumnView *view = GTK_COLUMN_VIEW(user_data);
-    GtkSorter *sort_model = process_view_get_sorter(view);
-    GListModel *model = process_view_get_model(view);
+    system_status_get_status(view->sys_stat);
+    cpu_delta = system_status_get_cpu_delta(view->sys_stat);
+    g_object_set_data_full(G_OBJECT(model), "cpu-delta", cpu_delta, (GDestroyNotify)g_free);
 
-    g_info("timeout started");
+    process_model_refresh(G_LIST_STORE(model));
+    
+    // Update sort
+    gtk_sorter_changed(sort_model, GTK_SORTER_CHANGE_DIFFERENT);
+  }
 
-    if (model != NULL) {
-
-      process_model_refresh(G_LIST_STORE(model));
-
-      // Update sort
-      gtk_sorter_changed(sort_model,  GTK_SORTER_CHANGE_DIFFERENT);
-    }
-
-    // Return TRUE to keep running, or FALSE to stop the timer permanently
-    return G_SOURCE_CONTINUE; 
+  return G_SOURCE_CONTINUE;
 }
 
 void on_view_map(GtkWidget *self, gpointer user_data) {
-  GtkColumnView *view = GTK_COLUMN_VIEW(self);
+  PmProcessView *process_view = PM_PROCESS_VIEW(user_data);
 
-  g_timeout_add(1000, on_timeout_tick, view); // replace with interval setting
+  g_timeout_add(1000, on_timeout_tick, process_view); // replace with interval setting
 
   // TODO: track source id for removal later
-} 
+}
 
-GtkWidget *process_view_new(void) {
-  GListModel          *model;
-  GtkWidget           *view;
-  GtkTreeListModel    *tree_model;
-  GtkSortListModel    *sort_model;
-  GtkSorter           *view_sorter;
-  GtkSorter           *tree_sorter;
-  GtkSingleSelection  *selection;
+static void pm_process_view_class_init(PmProcessViewClass *klass) {
+  GObjectClass *object_class = G_OBJECT_CLASS(klass);
+}
+
+void pm_process_view_init(PmProcessView *self) {
+  GListStore *model;
+  GtkWidget *column_view;
+  GtkTreeListModel *tree_model;
+  GtkSortListModel *sort_model;
+  GtkSorter *view_sorter;
+  GtkSorter *tree_sorter;
+  GtkSingleSelection *selection;
+  PmSystemStatus *sys_stat;
+
+  sys_stat = pm_system_status_new();
+  system_status_get_status(sys_stat);
 
   // Get model
-  model = process_model_new();
-  if (g_list_model_get_n_items(model) == 0) {
-    return gtk_label_new("Failed to fetch processes");
-  }
+  model = g_list_store_new(PM_TYPE_PROCESS_ITEM);
+  g_object_set_data(G_OBJECT(model), "cpu-delta", NULL);
 
   // Wrap model inside tree list model
-  tree_model = gtk_tree_list_model_new(model, FALSE, FALSE,
+  tree_model = gtk_tree_list_model_new(G_LIST_MODEL(model), FALSE, FALSE,
                                        process_item_get_children, NULL, NULL);
 
-  view = gtk_column_view_new(NULL);
+  column_view = gtk_column_view_new(NULL);
 
   // Wrap column view sorter with tree sorter
   // then wrap tree model with sort model (yes)⠀
@@ -382,36 +370,49 @@ GtkWidget *process_view_new(void) {
   // ⠀  ⠸⡇⠁⠀⠀⢏⠉⠀⠀⠙⠛⠛⠛⠉⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⢈⡏⠀⠀⠀
   // ⠀  ⠀⠯⣀⣈⣀⣈⣐⣲⣄⣄⣤⣴⣆⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣈⣛⡧⠀⠀⠀
   //
-  view_sorter = g_object_ref(gtk_column_view_get_sorter(GTK_COLUMN_VIEW(view)));
-  tree_sorter = GTK_SORTER (gtk_tree_list_row_sorter_new (g_object_ref (view_sorter)));
+  view_sorter = g_object_ref(gtk_column_view_get_sorter(GTK_COLUMN_VIEW(column_view)));
+  tree_sorter =
+      GTK_SORTER(gtk_tree_list_row_sorter_new(g_object_ref(view_sorter)));
   sort_model = gtk_sort_list_model_new(G_LIST_MODEL(tree_model), tree_sorter);
 
   selection = gtk_single_selection_new(G_LIST_MODEL(sort_model));
 
   // Apply sort model to column view sorter
-  gtk_column_view_set_model(GTK_COLUMN_VIEW(view),
+  gtk_column_view_set_model(GTK_COLUMN_VIEW(column_view),
                             GTK_SELECTION_MODEL(selection));
 
   // show column separators
-  gtk_column_view_set_show_column_separators(GTK_COLUMN_VIEW(view), TRUE);
+  gtk_column_view_set_show_column_separators(GTK_COLUMN_VIEW(column_view), TRUE);
 
   // Append columns
-  gtk_column_view_append_column(GTK_COLUMN_VIEW(view),
+  gtk_column_view_append_column(GTK_COLUMN_VIEW(column_view),
                                 create_first_column("name", "Process Name"));
-  gtk_column_view_append_column(GTK_COLUMN_VIEW(view),
+  gtk_column_view_append_column(GTK_COLUMN_VIEW(column_view),
                                 create_string_column("status", "Status"));
-  gtk_column_view_append_column(GTK_COLUMN_VIEW(view),
+  gtk_column_view_append_column(GTK_COLUMN_VIEW(column_view),
                                 create_numeric_column("cpu", "CPU", "%"));
   gtk_column_view_append_column(
-      GTK_COLUMN_VIEW(view), create_numeric_column("memory", "Memory", "MB"));
-  gtk_column_view_append_column(GTK_COLUMN_VIEW(view),
+      GTK_COLUMN_VIEW(column_view), create_numeric_column("memory", "Memory", "MB"));
+  gtk_column_view_append_column(GTK_COLUMN_VIEW(column_view),
                                 create_numeric_column("disk", "Disk", "MB/s"));
-  gtk_column_view_append_column(GTK_COLUMN_VIEW(view),
+  gtk_column_view_append_column(GTK_COLUMN_VIEW(column_view),
                                 create_string_column("user", "User"));
-  gtk_column_view_append_column(GTK_COLUMN_VIEW(view),
+  gtk_column_view_append_column(GTK_COLUMN_VIEW(column_view),
                                 create_string_column("priority", "Priority"));
 
-  g_signal_connect(view, "map", G_CALLBACK(on_view_map), NULL);
+  g_signal_connect(column_view, "map", G_CALLBACK(on_view_map), self);
 
-  return view;
+  self->column_view = column_view;
+  self->model = G_LIST_MODEL(model);
+  self->sys_stat = sys_stat;
+}
+
+PmProcessView *process_view_new(void) {
+  PmProcessView *process_view = g_object_new(PM_TYPE_PROCESS_VIEW, NULL);
+  process_model_refresh(G_LIST_STORE(process_view->model));
+  return process_view;
+}
+
+GtkWidget *process_view_get_view(PmProcessView *view) {
+  return g_object_ref(view->column_view);
 }

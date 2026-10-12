@@ -21,102 +21,101 @@
 #include "config.h"
 #include <glib/gi18n.h>
 
+#include "glib.h"
 #include "process-manager-application.h"
 #include "process-manager-window.h"
 
-struct _ProcessManagerApplication
-{
-	GtkApplication parent_instance;
+struct _ProcessManagerApplication {
+  GtkApplication parent_instance;
 };
 
-G_DEFINE_FINAL_TYPE (ProcessManagerApplication, process_manager_application, GTK_TYPE_APPLICATION)
+G_DEFINE_FINAL_TYPE(ProcessManagerApplication, process_manager_application,
+                    GTK_TYPE_APPLICATION)
 
 ProcessManagerApplication *
-process_manager_application_new (const char        *application_id,
-                                 GApplicationFlags  flags)
-{
-	g_return_val_if_fail (application_id != NULL, NULL);
+process_manager_application_new(const char *application_id,
+                                GApplicationFlags flags) {
+  g_return_val_if_fail(application_id != NULL, NULL);
 
-	return g_object_new (PROCESS_MANAGER_TYPE_APPLICATION,
-	                     "application-id", application_id,
-	                     "flags", flags,
-	                     "resource-base-path", "/com/github/kenayake/ProcessManager",
-	                     NULL);
+  return g_object_new(PROCESS_MANAGER_TYPE_APPLICATION, "application-id",
+                      application_id, "flags", flags, "resource-base-path",
+                      "/com/github/kenayake/ProcessManager", NULL);
+}
+
+static void process_manager_application_activate(GApplication *app) {
+  GtkWindow *window;
+
+  g_assert(PROCESS_MANAGER_IS_APPLICATION(app));
+
+  window = gtk_application_get_active_window(GTK_APPLICATION(app));
+
+  if (window == NULL)
+    window =
+        g_object_new(PROCESS_MANAGER_TYPE_WINDOW, "application", app, NULL);
+
+  gtk_window_set_resizable(window, TRUE);
+
+  gtk_window_present(window);
 }
 
 static void
-process_manager_application_activate (GApplication *app)
-{
-	GtkWindow *window;
+process_manager_application_class_init(ProcessManagerApplicationClass *klass) {
+  GApplicationClass *app_class = G_APPLICATION_CLASS(klass);
 
-	g_assert (PROCESS_MANAGER_IS_APPLICATION (app));
-
-	window = gtk_application_get_active_window (GTK_APPLICATION (app));
-
-	if (window == NULL)
-		window = g_object_new (PROCESS_MANAGER_TYPE_WINDOW,
-		                       "application", app,
-		                       NULL);
-
-	gtk_window_present (window);
+  app_class->activate = process_manager_application_activate;
 }
 
-static void
-process_manager_application_class_init (ProcessManagerApplicationClass *klass)
-{
-	GApplicationClass *app_class = G_APPLICATION_CLASS (klass);
+static void process_manager_application_about_action(GSimpleAction *action,
+                                                     GVariant *parameter,
+                                                     gpointer user_data) {
+  static const char *authors[] = {"Unknown", NULL};
+  ProcessManagerApplication *self = user_data;
+  GtkWindow *window = NULL;
 
-	app_class->activate = process_manager_application_activate;
+  g_assert(PROCESS_MANAGER_IS_APPLICATION(self));
+
+  window = gtk_application_get_active_window(GTK_APPLICATION(self));
+
+  gtk_show_about_dialog(window, "program-name", "Process-manager",
+                        "logo-icon-name", "com.github.kenayake.ProcessManager",
+                        "authors", authors, "translator-credits",
+                        _("translator-credits"), "version", "0.1.0",
+                        "copyright", "© 2026 Unknown", NULL);
 }
 
-static void
-process_manager_application_about_action (GSimpleAction *action,
-                                          GVariant      *parameter,
-                                          gpointer       user_data)
-{
-	static const char *authors[] = {"Unknown", NULL};
-	ProcessManagerApplication *self = user_data;
-	GtkWindow *window = NULL;
+static void process_manager_application_quit_action(GSimpleAction *action,
+                                                    GVariant *parameter,
+                                                    gpointer user_data) {
+  ProcessManagerApplication *self = user_data;
 
-	g_assert (PROCESS_MANAGER_IS_APPLICATION (self));
+  g_assert(PROCESS_MANAGER_IS_APPLICATION(self));
 
-	window = gtk_application_get_active_window (GTK_APPLICATION (self));
-
-	gtk_show_about_dialog (window,
-	                       "program-name", "Process-manager",
-	                       "logo-icon-name", "com.github.kenayake.ProcessManager",
-	                       "authors", authors,
-	                       "translator-credits", _("translator-credits"),
-	                       "version", "0.1.0",
-	                       "copyright", "© 2026 Unknown",
-	                       NULL);
-}
-
-static void
-process_manager_application_quit_action (GSimpleAction *action,
-                                         GVariant      *parameter,
-                                         gpointer       user_data)
-{
-	ProcessManagerApplication *self = user_data;
-
-	g_assert (PROCESS_MANAGER_IS_APPLICATION (self));
-
-	g_application_quit (G_APPLICATION (self));
+  g_application_quit(G_APPLICATION(self));
 }
 
 static const GActionEntry app_actions[] = {
-	{ "quit", process_manager_application_quit_action },
-	{ "about", process_manager_application_about_action },
+    {"quit", process_manager_application_quit_action},
+    {"about", process_manager_application_about_action},
 };
 
-static void
-process_manager_application_init (ProcessManagerApplication *self)
-{
-	g_action_map_add_action_entries (G_ACTION_MAP (self),
-	                                 app_actions,
-	                                 G_N_ELEMENTS (app_actions),
-	                                 self);
-	gtk_application_set_accels_for_action (GTK_APPLICATION (self),
-	                                       "app.quit",
-	                                       (const char *[]) { "<control>q", NULL });
+static gboolean on_timeout_tick(gpointer user_data) {
+  ProcessManagerApplication *self = user_data;
+
+  g_application_quit(G_APPLICATION(self));
+
+  return FALSE;
+}
+
+static void on_startup(ProcessManagerApplication *self, GtkWindow *window,
+                       gpointer user_data) {
+  g_timeout_add(60000, on_timeout_tick, self);
+}
+
+static void process_manager_application_init(ProcessManagerApplication *self) {
+  g_action_map_add_action_entries(G_ACTION_MAP(self), app_actions,
+                                  G_N_ELEMENTS(app_actions), self);
+  gtk_application_set_accels_for_action(GTK_APPLICATION(self), "app.quit",
+                                        (const char *[]){"<control>q", NULL});
+
+  // g_signal_connect(self, "window-added", G_CALLBACK(on_startup), NULL);
 }

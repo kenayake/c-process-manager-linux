@@ -2,12 +2,12 @@
 #include "config.h"
 #include "core/process-item.h"
 #include "core/process-raw.h"
+#include "core/system-status.h"
 #include "gio/gio.h"
 #include "glib-object.h"
 #include "glib.h"
 #include "glibconfig.h"
 #include "process-raw.h"
-#include "util/timespec-type.h"
 #include <bits/time.h>
 #include <gtk/gtk.h>
 #include <stdio.h>
@@ -23,10 +23,6 @@ static gboolean first_pass(GHashTable *exList, GError **error) {
 
   // Loop files in /proc
   while ((filename = g_dir_read_name(dir)) != NULL) {
-    if (g_strcmp0(filename, "stat") == 0) {
-      // TODO: Get system status
-    }
-
     g_autofree gint64 *pid = g_new0(gint64, 1);
 
     // get data in /proc/pid
@@ -98,7 +94,7 @@ static gboolean first_pass(GHashTable *exList, GError **error) {
             g_hash_table_insert(exList, g_memdup2(pgrp, sizeof *pgrp), group_leader);
           } else {
             // if process with pgrp does not exist, set child as leader
-            g_info("Process with PID: %ld does not exist", *pid);
+            // g_info("Process with PID: %ld does not exist", *pid);
 
             g_hash_table_insert(exList, g_memdup2(pid, sizeof *pid), process_raw);
           }
@@ -115,6 +111,7 @@ static gboolean first_pass(GHashTable *exList, GError **error) {
 
 static void second_pass(GListModel *loList, GHashTable *exList) {                        
   guint size = g_list_model_get_n_items(loList);
+  guint64 *cpu_delta = g_object_get_data(G_OBJECT(loList), "cpu-delta");
 
   if (size == 0) {
     return;
@@ -127,7 +124,7 @@ static void second_pass(GListModel *loList, GHashTable *exList) {
     GListModel *group_item_children;
     ProcessRaw *process_raw;
 
-    g_autoptr(ProcessItem) item = (ProcessItem *)g_list_model_get_object(loList, i);
+    g_autoptr(PmProcessItem) item = (PmProcessItem *)g_list_model_get_object(loList, i);
     g_object_get(item, "pid", group_item_id, "name", &item_name, NULL);
     
     if (g_strcmp0(item_name, "disk_write_test") == 0) {
@@ -148,14 +145,14 @@ static void second_pass(GListModel *loList, GHashTable *exList) {
           g_autofree gint64 *child_item_id = g_new(gint64, 1);
           ProcessRaw *child_process_raw;
 
-          g_autoptr(ProcessItem) child = (ProcessItem *)g_list_model_get_object(group_item_children, j);
+          g_autoptr(PmProcessItem) child = (PmProcessItem *)g_list_model_get_object(group_item_children, j);
           g_object_get(child, "pid", child_item_id, NULL);
           
           // If child exists on external list
           if (g_hash_table_lookup_extended(process_raw->children, child_item_id, NULL,
                                      (gpointer *)&child_process_raw) == TRUE) {
             // Update local child data
-            process_item_update_from_raw(child, child_process_raw);                          
+            process_item_update_from_raw(child, child_process_raw, cpu_delta);                          
           } else {
             // else, delete the local child
             g_list_store_remove(G_LIST_STORE(group_item_children), j);
@@ -166,7 +163,7 @@ static void second_pass(GListModel *loList, GHashTable *exList) {
       }
 
       // Update group leader
-      process_item_update_from_raw(item, process_raw);
+      process_item_update_from_raw(item, process_raw, cpu_delta);
     } else {
       // Process group leader is redundant, delete it and its children
       g_list_store_remove(G_LIST_STORE(loList), i);
@@ -177,7 +174,7 @@ static void second_pass(GListModel *loList, GHashTable *exList) {
 static void third_pass(gpointer key, gpointer value, gpointer user_data) {
   ProcessRaw *raw = (ProcessRaw *)value;
   GListModel *local_list = G_LIST_MODEL(user_data);
-  g_autoptr(ProcessItem) item = NULL;
+  g_autoptr(PmProcessItem) item = NULL;
 
   if (g_strcmp0(raw->comm, "disk_write_test") == 0) {
     process_item_print_model(local_list, "");
@@ -237,7 +234,7 @@ static gboolean capture_process_data(GListStore *store, GError **error) {
 GListModel *process_model_new(void) {
   GListStore *store;
   GError *error = NULL;
-  store = g_list_store_new(PROCESS_TYPE_ITEM);
+  store = g_list_store_new(PM_TYPE_PROCESS_ITEM);
 
   if (!(capture_process_data(store, &error))) {
     g_warning("Failed get processes: %s", error->message);
@@ -251,7 +248,7 @@ GListModel *process_model_new(void) {
 void process_model_refresh(GListStore *store) {
   GError *error = NULL;
 
-  g_info("refreshing");
+  // g_info("refreshing");
 
   if (!capture_process_data(store, &error)) {
     g_warning("Failed get processes: %s", error->message);

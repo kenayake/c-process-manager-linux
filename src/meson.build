@@ -6,7 +6,8 @@ process_manager_sources = [
   'core/process-item.c',
   'core/process-model.c',
   'core/process-raw.c',
-  'util/timespec-type.c',
+  'core/system-status.c',
+  'components/table-cell.c',
   'util/disk-usage-type.c',
   'util/cpu-usage-type.c',
 ]
