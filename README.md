@@ -1,3 +1,3 @@
-# process-manager
+# C Process Manager for Linux
 
-A description of this project.
+In progress
