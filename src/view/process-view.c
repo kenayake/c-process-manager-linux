@@ -23,6 +23,7 @@ struct _PmProcessView {
   GListModel *model;
   PmSystemStatus *sys_stat;
   GtkWidget *column_view;
+  guint timeout_id;
 };
 
 G_DEFINE_FINAL_TYPE(PmProcessView, pm_process_view, G_TYPE_OBJECT)
@@ -322,9 +323,13 @@ static gboolean on_timeout_tick(gpointer user_data) {
 void on_view_map(GtkWidget *self, gpointer user_data) {
   PmProcessView *process_view = PM_PROCESS_VIEW(user_data);
 
-  g_timeout_add(1000, on_timeout_tick, process_view); // replace with interval setting
+  process_view->timeout_id = g_timeout_add(1000, on_timeout_tick, process_view); // replace with interval setting
+}
 
-  // TODO: track source id for removal later
+void on_view_unmap(GtkWidget *self, gpointer user_data) {
+  PmProcessView *process_view = PM_PROCESS_VIEW(user_data);
+
+  g_source_remove(process_view->timeout_id);
 }
 
 static void pm_process_view_class_init(PmProcessViewClass *klass) {
@@ -401,6 +406,7 @@ void pm_process_view_init(PmProcessView *self) {
                                 create_string_column("priority", "Priority"));
 
   g_signal_connect(column_view, "map", G_CALLBACK(on_view_map), self);
+  g_signal_connect(column_view, "unmap", G_CALLBACK(on_view_unmap), self);
 
   self->column_view = column_view;
   self->model = G_LIST_MODEL(model);
