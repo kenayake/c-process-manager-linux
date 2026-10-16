@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="PmTableCell" parent="GtkBox">
+    <property name="width-request">100</property>
+    <child>
+      <object class="GtkLabel">
+        <binding name="label">
+          <!-- <closure type="gchararray" function="label_binding_closure" >
+            <lookup type="PmTableCell"></lookup>
+            
+          </closure> -->
+          <lookup name="label">PmTableCell</lookup>
+        </binding>
+        <property name="margin-start">16</property>
+        <property name="margin-end">16</property>
+        <property name="margin-bottom">16</property>
+        <property name="margin-top">16</property>
+        <property name="justify">GTK_JUSTIFY_RIGHT</property>
+      </object>
+    </child>
+  </template>
+</interface>

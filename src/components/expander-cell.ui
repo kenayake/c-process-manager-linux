@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="PmExpanderCell" parent="GtkBox">
+    <property name="width-request">100</property>
+    <child>
+      <object class="GtkTreeExpander" id="expander">
+        <property name="indent-for-icon">TRUE</property>
+        <property name="margin-start">16</property>
+        <property name="margin-end">16</property>
+        <property name="margin-bottom">16</property>
+        <property name="margin-top">16</property>
+        <property name="child">
+          <object class="GtkLabel" id="label">
+            <binding name="label">
+              <lookup name="label">PmExpanderCell</lookup>
+            </binding>
+          </object>
+        </property>
+      </object>
+    </child>
+  </template>
+</interface>

@@ -1,4 +1,6 @@
 #include "process-view.h"
+#include "components/expander-cell.h"
+#include "components/table-cell.h"
 #include "config.h"
 #include "core/process-item.h"
 #include "core/process-model.h"
@@ -45,12 +47,14 @@ gboolean bind_numeric_to_label(GBinding *binding, const GValue *from_value,
 static void setup_expander_column(GtkSignalListItemFactory *factory,
                                   GtkListItem *list_item, gpointer user_data) {
   GtkWidget *expander;
-  GtkWidget *label;
+  // GtkWidget *label;
 
-  expander = gtk_tree_expander_new();
-  label = gtk_label_new(NULL);
+  // expander = gtk_tree_expander_new();
+  // label = gtk_label_new(NULL);
 
-  gtk_tree_expander_set_child(GTK_TREE_EXPANDER(expander), label);
+  // gtk_tree_expander_set_child(GTK_TREE_EXPANDER(expander), label);
+
+  expander = pm_expander_cell_new(NULL);
   gtk_list_item_set_child(list_item, expander);
 }
 
@@ -68,23 +72,33 @@ static void bind_expander_column(GtkSignalListItemFactory *factory,
   row = GTK_TREE_LIST_ROW(gtk_list_item_get_item(list_item));
   process = PM_PROCESS_ITEM(gtk_tree_list_row_get_item(row));
   expander = gtk_list_item_get_child(list_item);
-  label = gtk_tree_expander_get_child(GTK_TREE_EXPANDER(expander));
+  // label = gtk_tree_expander_get_child(GTK_TREE_EXPANDER(expander));
 
-  gtk_tree_expander_set_list_row(GTK_TREE_EXPANDER(expander), row);
-  // g_object_get(process, data->name, &text, NULL);
-  // gtk_label_set_text(GTK_LABEL(label), text);
+  pm_expander_cell_set_list_row(PM_EXPANDER_CELL(expander), row);
 
-  binding = g_object_bind_property(process, data->name, label, "label",
+  binding = g_object_bind_property(process, data->name, expander, "label",
                                    G_BINDING_SYNC_CREATE);
 
   key = g_strdup_printf("%s-key", data->name);
 
   g_object_set_data(G_OBJECT(list_item), key, binding);
 
+  gchar *text;
+  g_object_get(expander, "label", &text, NULL);
+  
   g_object_unref(process);
 }
 
 static void setup_generic_column(GtkSignalListItemFactory *factory,
+                                 GtkListItem *list_item, gpointer user_data) {
+  GtkWidget *label;
+
+  label = pm_table_cell_new(NULL);
+
+  gtk_list_item_set_child(list_item, label);
+}
+
+static void setup_numeric_column(GtkSignalListItemFactory *factory,
                                  GtkListItem *list_item, gpointer user_data) {
   GtkWidget *label;
 
@@ -108,7 +122,8 @@ static void bind_string_column(GtkSignalListItemFactory *factory,
   label = gtk_list_item_get_child(list_item);
 
   if (process == NULL) {
-    gtk_label_set_text(GTK_LABEL(label), "");
+    // gtk_label_set_text(GTK_LABEL(label), "");
+    g_object_set(label, "label", "", NULL);
     return;
   }
 
@@ -141,7 +156,7 @@ static void bind_numeric_column(GtkSignalListItemFactory *factory,
   label = gtk_list_item_get_child(list_item);
 
   if (process == NULL) {
-    gtk_label_set_text(GTK_LABEL(label), "");
+    g_object_set(label, "label", "", NULL);
     return;
   }
 
@@ -152,13 +167,6 @@ static void bind_numeric_column(GtkSignalListItemFactory *factory,
   key = g_strdup_printf("%s-key", data->name);
 
   g_object_set_data(G_OBJECT(list_item), key, binding);
-
-  // g_object_get(process, data->name, &value, NULL);
-
-  // g_snprintf(text, sizeof(text), data->suffix != NULL ? "%.1f %s" : "%.1f",
-  //            value, data->suffix);
-
-  // gtk_label_set_text(GTK_LABEL(label), text);
 
   g_object_unref(process);
 }
@@ -175,6 +183,7 @@ static void unbind_generic_column(GtkSignalListItemFactory *factory,
   }
 }
 
+//!Note to self: dont turn it into builder factory, its not worth it
 static GtkColumnViewColumn *create_first_column(const gchar *prop_name,
                                                 const gchar *title) {
   GtkListItemFactory *factory;

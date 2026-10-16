@@ -3,8 +3,8 @@
   <requires lib="gtk" version="4.0"/>
   <template class="ProcessManagerWindow" parent="GtkApplicationWindow">
     <property name="title" translatable="yes">Process-manager</property>
-    <property name="default-width">800</property>
-    <property name="default-height">600</property>
+    <property name="default-width">1024</property>
+    <property name="default-height">768</property>
     <property name="titlebar">
       <object class="GtkHeaderBar">
         <property name="title-widget">

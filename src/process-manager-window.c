@@ -20,7 +20,6 @@
 
 #include "config.h"
 #include "glib-object.h"
-#include "glib.h"
 #include "gtk/gtk.h"
 #include "gtk/gtkshortcut.h"
 #include "view/process-view.h"
@@ -50,7 +49,19 @@ process_manager_window_class_init(ProcessManagerWindowClass *klass) {
 
 static void process_manager_window_init(ProcessManagerWindow *self) {
   PmProcessView *process_view;
+  GtkCssProvider *provider;
+
   gtk_widget_init_template(GTK_WIDGET(self));
+
+  provider = gtk_css_provider_new();
+  gtk_css_provider_load_from_path(provider, "src/global.css");     
+
+  gtk_style_context_add_provider_for_display(
+    gdk_display_get_default(),
+    GTK_STYLE_PROVIDER(provider),
+    GTK_STYLE_PROVIDER_PRIORITY_APPLICATION
+  );
+  g_object_unref (provider);
 
   process_view = process_view_new();
 
