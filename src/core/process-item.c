@@ -316,7 +316,6 @@ void process_item_update_from_raw(PmProcessItem *item, ProcessRaw *raw, guint64 
   int interval = 1; // replace with refresh_secs setting later
 
   // Calculate cpu usage percent
-  // long clock_tick = sysconf(_SC_CLK_TCK);
   long cores = sysconf(_SC_NPROCESSORS_ONLN);
   gint64 cpu_new = raw->cpu_usage.utime + raw->cpu_usage.stime;
   gint64 cpu_old = item->cpu_usage.utime + item->cpu_usage.stime;
@@ -325,7 +324,7 @@ void process_item_update_from_raw(PmProcessItem *item, ProcessRaw *raw, guint64 
               : 0.0;
 
   if (g_strcmp0(item->status, "R")==0) {
-    g_info("%f",cpu);
+    // g_info("%f",cpu);
   }
 
   // Calculate disk usage

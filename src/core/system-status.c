@@ -201,15 +201,17 @@ static gboolean get_cpu_status(PmSystemStatus *system_status, GError **error) {
         user + nice + system + idle_time + iowait + irq + softirq + steal;
     guint64 in_use = total - idle;
 
-    // 2 lazy to pretty up
-    system_status->cpu_usage = (((double)in_use) - (system_status->cpu_used)) /
-                               (total - system_status->cpu_time);
+    if (system_status->cpu_time != 0) {
+      // 2 lazy to pretty up
+      system_status->cpu_usage = (((double)in_use) - (system_status->cpu_used)) /
+                               (total - system_status->cpu_time) * 100;
+    }
+
+    // g_info("%f", system_status->cpu_usage);
 
     system_status->cpu_delta = total - system_status->cpu_time;
     system_status->cpu_time = total;
     system_status->cpu_used = in_use;
-
-    g_info("%f", ((double)total - idle) / total);
     return TRUE;
   }
 

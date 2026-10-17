@@ -5,17 +5,19 @@
     <child>
       <object class="GtkLabel">
         <binding name="label">
-          <!-- <closure type="gchararray" function="label_binding_closure" >
-            <lookup type="PmTableCell"></lookup>
-            
-          </closure> -->
-          <lookup name="label">PmTableCell</lookup>
+          <closure type="gchararray" function="label_binding_closure">
+            <lookup name="label">
+              PmTableCell
+            </lookup>
+          </closure>
         </binding>
         <property name="margin-start">16</property>
         <property name="margin-end">16</property>
-        <property name="margin-bottom">16</property>
-        <property name="margin-top">16</property>
-        <property name="justify">GTK_JUSTIFY_RIGHT</property>
+        <property name="margin-bottom">12</property>
+        <property name="margin-top">12</property>
+        <property name="halign">end</property>
+        <property name="hexpand">true</property>
+        <property name="ellipsize">start</property>
       </object>
     </child>
   </template>

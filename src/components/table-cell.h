@@ -13,7 +13,7 @@ struct _PmTableCellClass {
   GtkBoxClass parent_class;
 
   // virtual functions
-  gchararray (*label_binding_closure) (GtkWidget *this, gchararray label);
+  gchararray (*label_binding_closure) (GtkWidget *self);
 
   gpointer padding[12];
 };

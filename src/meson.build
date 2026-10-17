@@ -10,6 +10,9 @@ process_manager_sources = [
   'components/table-cell.c',
   'util/disk-usage-type.c',
   'util/cpu-usage-type.c',
+  'components/table-cell.c',
+  'components/expander-cell.c',
+  'components/numeric-cell.c'
 ]
 
 process_manager_deps = [

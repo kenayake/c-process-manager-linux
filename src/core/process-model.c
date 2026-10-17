@@ -129,7 +129,7 @@ static void second_pass(GListModel *loList, GHashTable *exList) {
     
     if (g_strcmp0(item_name, "disk_write_test") == 0) {
       // process_item_print_model(loList, "");
-      process_raw_print_hash_table(exList);
+      // process_raw_print_hash_table(exList);
     }
 
     // if process group leader exists in external list
@@ -177,7 +177,7 @@ static void third_pass(gpointer key, gpointer value, gpointer user_data) {
   g_autoptr(PmProcessItem) item = NULL;
 
   if (g_strcmp0(raw->comm, "disk_write_test") == 0) {
-    process_item_print_model(local_list, "");
+    // process_item_print_model(local_list, "");
   }
 
   // Check if raw item exists in local list and external list
@@ -254,6 +254,8 @@ void process_model_refresh(GListStore *store) {
     g_warning("Failed get processes: %s", error->message);
 
     g_error_free(error);
+
+    //TODO: add popup if refresh fails
   }
 
 }

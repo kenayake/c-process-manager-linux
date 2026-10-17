@@ -1,0 +1,40 @@
+columnview cell {
+  padding: 0;
+}
+
+columnview row:selected {
+  background-color: #eeeeee; /* Your custom color */
+  border-top: 1px solid #393939;
+  border-bottom: 1px solid #393939;
+  color: black;
+}
+
+columnview.column-separators listview row cell:not(:first-child) {
+    border-left: 2px solid rgb(210, 210, 210);
+}
+
+
+treeexpander indent{
+  -gtk-icon-size: 16px;
+}
+
+.accent1 {
+  background-color: #c7e0f4;
+}
+
+.accent2 {
+  background-color: #8ccdff;
+}
+
+.accent3 {
+  background-color: #5badff;
+}
+
+.accent4 {
+  background-color: #0078d4;
+}
+
+/* .table-cell {
+  border: 5px solid green;
+} */
+

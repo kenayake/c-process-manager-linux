@@ -1,5 +1,6 @@
 #include "process-view.h"
 #include "components/expander-cell.h"
+#include "components/numeric-cell.h"
 #include "components/table-cell.h"
 #include "config.h"
 #include "core/process-item.h"
@@ -17,6 +18,7 @@
 typedef struct {
   const gchar *name;
   const gchar *suffix;
+  gdouble max;
 } UserData;
 
 struct _PmProcessView {
@@ -83,9 +85,9 @@ static void bind_expander_column(GtkSignalListItemFactory *factory,
 
   g_object_set_data(G_OBJECT(list_item), key, binding);
 
-  gchar *text;
-  g_object_get(expander, "label", &text, NULL);
-  
+  // gchar *text;
+  // g_object_get(expander, "label", &text, NULL);
+
   g_object_unref(process);
 }
 
@@ -101,8 +103,9 @@ static void setup_generic_column(GtkSignalListItemFactory *factory,
 static void setup_numeric_column(GtkSignalListItemFactory *factory,
                                  GtkListItem *list_item, gpointer user_data) {
   GtkWidget *label;
+  UserData *data = user_data;
 
-  label = gtk_label_new(NULL);
+  label = pm_numeric_cell_new(0.0, data->max, data->suffix);
 
   gtk_list_item_set_child(list_item, label);
 }
@@ -156,13 +159,16 @@ static void bind_numeric_column(GtkSignalListItemFactory *factory,
   label = gtk_list_item_get_child(list_item);
 
   if (process == NULL) {
-    g_object_set(label, "label", "", NULL);
+    g_object_set(label, "raw_value", 0.0, NULL);
     return;
   }
 
-  binding = g_object_bind_property_full(
-      process, data->name, label, "label", G_BINDING_SYNC_CREATE,
-      bind_numeric_to_label, NULL, data, NULL);
+  binding = g_object_bind_property(process, data->name, label, "raw_value",
+                                   G_BINDING_SYNC_CREATE);
+
+  // binding = g_object_bind_property_full(
+  //     process, data->name, label, "label", G_BINDING_SYNC_CREATE,
+  //     bind_numeric_to_label, NULL, data, NULL);
 
   key = g_strdup_printf("%s-key", data->name);
 
@@ -183,7 +189,7 @@ static void unbind_generic_column(GtkSignalListItemFactory *factory,
   }
 }
 
-//!Note to self: dont turn it into builder factory, its not worth it
+//! Note to self: dont turn it into builder factory, its not worth it
 static GtkColumnViewColumn *create_first_column(const gchar *prop_name,
                                                 const gchar *title) {
   GtkListItemFactory *factory;
@@ -223,7 +229,8 @@ static GtkColumnViewColumn *create_first_column(const gchar *prop_name,
 
 static GtkColumnViewColumn *create_numeric_column(const gchar *prop_name,
                                                   const gchar *title,
-                                                  const gchar *suffix) {
+                                                  const gchar *suffix,
+                                                  const gdouble max) {
   GtkListItemFactory *factory;
   GtkColumnViewColumn *column;
   GtkExpression *expr;
@@ -231,10 +238,12 @@ static GtkColumnViewColumn *create_numeric_column(const gchar *prop_name,
   UserData *user_data = g_new0(UserData, 1);
   user_data->name = prop_name;
   user_data->suffix = suffix;
+  user_data->max = max;
 
   factory = gtk_signal_list_item_factory_new();
 
-  g_signal_connect(factory, "setup", G_CALLBACK(setup_generic_column), NULL);
+  g_signal_connect(factory, "setup", G_CALLBACK(setup_numeric_column),
+                   user_data);
 
   g_signal_connect(factory, "bind", G_CALLBACK(bind_numeric_column), user_data);
 
@@ -309,7 +318,8 @@ static GtkSorter *process_view_get_sorter(GtkColumnView *view) {
 
 static gboolean on_timeout_tick(gpointer user_data) {
   PmProcessView *view = user_data;
-  GtkSorter *sort_model = process_view_get_sorter(GTK_COLUMN_VIEW(view->column_view));
+  GtkSorter *sort_model =
+      process_view_get_sorter(GTK_COLUMN_VIEW(view->column_view));
   GListModel *model = view->model;
   guint64 *cpu_delta;
   // g_info("timeout started");
@@ -318,10 +328,11 @@ static gboolean on_timeout_tick(gpointer user_data) {
 
     system_status_get_status(view->sys_stat);
     cpu_delta = system_status_get_cpu_delta(view->sys_stat);
-    g_object_set_data_full(G_OBJECT(model), "cpu-delta", cpu_delta, (GDestroyNotify)g_free);
+    g_object_set_data_full(G_OBJECT(model), "cpu-delta", cpu_delta,
+                           (GDestroyNotify)g_free);
 
     process_model_refresh(G_LIST_STORE(model));
-    
+
     // Update sort
     gtk_sorter_changed(sort_model, GTK_SORTER_CHANGE_DIFFERENT);
   }
@@ -332,7 +343,8 @@ static gboolean on_timeout_tick(gpointer user_data) {
 void on_view_map(GtkWidget *self, gpointer user_data) {
   PmProcessView *process_view = PM_PROCESS_VIEW(user_data);
 
-  process_view->timeout_id = g_timeout_add(1000, on_timeout_tick, process_view); // replace with interval setting
+  process_view->timeout_id = g_timeout_add(
+      1000, on_timeout_tick, process_view); // replace with interval setting
 }
 
 void on_view_unmap(GtkWidget *self, gpointer user_data) {
@@ -354,9 +366,13 @@ void pm_process_view_init(PmProcessView *self) {
   GtkSorter *tree_sorter;
   GtkSingleSelection *selection;
   PmSystemStatus *sys_stat;
+  gdouble disk_usage;
+  guint64 mem_total;
 
   sys_stat = pm_system_status_new();
   system_status_get_status(sys_stat);
+  g_object_get(sys_stat,  "mem_total", &mem_total,
+               "disk_usage", &disk_usage, NULL);
 
   // Get model
   model = g_list_store_new(PM_TYPE_PROCESS_ITEM);
@@ -384,7 +400,8 @@ void pm_process_view_init(PmProcessView *self) {
   // ⠀  ⠸⡇⠁⠀⠀⢏⠉⠀⠀⠙⠛⠛⠛⠉⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⢈⡏⠀⠀⠀
   // ⠀  ⠀⠯⣀⣈⣀⣈⣐⣲⣄⣄⣤⣴⣆⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣈⣛⡧⠀⠀⠀
   //
-  view_sorter = g_object_ref(gtk_column_view_get_sorter(GTK_COLUMN_VIEW(column_view)));
+  view_sorter =
+      g_object_ref(gtk_column_view_get_sorter(GTK_COLUMN_VIEW(column_view)));
   tree_sorter =
       GTK_SORTER(gtk_tree_list_row_sorter_new(g_object_ref(view_sorter)));
   sort_model = gtk_sort_list_model_new(G_LIST_MODEL(tree_model), tree_sorter);
@@ -396,19 +413,23 @@ void pm_process_view_init(PmProcessView *self) {
                             GTK_SELECTION_MODEL(selection));
 
   // show column separators
-  gtk_column_view_set_show_column_separators(GTK_COLUMN_VIEW(column_view), TRUE);
+  gtk_column_view_set_show_column_separators(GTK_COLUMN_VIEW(column_view),
+                                             TRUE);
 
   // Append columns
   gtk_column_view_append_column(GTK_COLUMN_VIEW(column_view),
-                                create_first_column("name", "Process Name"));
+                                create_first_column("name", "Name"));
   gtk_column_view_append_column(GTK_COLUMN_VIEW(column_view),
                                 create_string_column("status", "Status"));
-  gtk_column_view_append_column(GTK_COLUMN_VIEW(column_view),
-                                create_numeric_column("cpu", "CPU", "%"));
   gtk_column_view_append_column(
-      GTK_COLUMN_VIEW(column_view), create_numeric_column("memory", "Memory", "MB"));
-  gtk_column_view_append_column(GTK_COLUMN_VIEW(column_view),
-                                create_numeric_column("disk", "Disk", "MB/s"));
+      GTK_COLUMN_VIEW(column_view),
+      create_numeric_column("cpu", "CPU", "%", 100.0));
+  gtk_column_view_append_column(
+      GTK_COLUMN_VIEW(column_view),
+      create_numeric_column("memory", "Memory", "MB", (double)mem_total/1e+6));
+  gtk_column_view_append_column(
+      GTK_COLUMN_VIEW(column_view),
+      create_numeric_column("disk", "Disk", "MB/s", disk_usage));
   gtk_column_view_append_column(GTK_COLUMN_VIEW(column_view),
                                 create_string_column("user", "User"));
   gtk_column_view_append_column(GTK_COLUMN_VIEW(column_view),
