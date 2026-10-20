@@ -426,10 +426,10 @@ void pm_process_view_init(PmProcessView *self) {
       create_numeric_column("cpu", "CPU", "%", 100.0));
   gtk_column_view_append_column(
       GTK_COLUMN_VIEW(column_view),
-      create_numeric_column("memory", "Memory", "MB", (double)mem_total/1e+6));
+      create_numeric_column("memory", "Memory", " MB", (double)mem_total/1e+6));
   gtk_column_view_append_column(
       GTK_COLUMN_VIEW(column_view),
-      create_numeric_column("disk", "Disk", "MB/s", disk_usage));
+      create_numeric_column("disk", "Disk", " MB/s", disk_usage));
   gtk_column_view_append_column(GTK_COLUMN_VIEW(column_view),
                                 create_string_column("user", "User"));
   gtk_column_view_append_column(GTK_COLUMN_VIEW(column_view),
