@@ -11,6 +11,7 @@ process_manager_sources = [
   'util/disk-usage-type.c',
   'util/cpu-usage-type.c',
   'components/table-cell.c',
+  # 'components/header-cell.c',
   'components/expander-cell.c',
   'components/numeric-cell.c'
 ]

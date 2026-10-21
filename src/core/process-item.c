@@ -11,6 +11,8 @@
 #include <bits/time.h>
 #include <gtk/gtk.h>
 #include <pwd.h>
+#include <stdlib.h>
+#include <string.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -320,7 +322,7 @@ void process_item_update_from_raw(PmProcessItem *item, ProcessRaw *raw, guint64 
   gint64 cpu_new = raw->cpu_usage.utime + raw->cpu_usage.stime;
   gint64 cpu_old = item->cpu_usage.utime + item->cpu_usage.stime;
 
-  double cpu = cpu_usage_time != NULL && *cpu_usage_time != 0 ? (((double)cpu_new - cpu_old) / *cpu_usage_time) * 100 * cores
+  double cpu = cpu_usage_time != NULL && *cpu_usage_time != 0 ? (((double)cpu_new - cpu_old) / *cpu_usage_time) * 100
               : 0.0;
 
   if (g_strcmp0(item->status, "R")==0) {
@@ -424,4 +426,31 @@ void process_item_print_model(GListModel *list, const gchar *prefix) {
       process_item_print_model(G_LIST_MODEL(process->children), "   ");
     }
   }
+}
+
+void process_item_open_folder(PmProcessItem *self) {
+  g_autoptr(GError) local_error = NULL;
+  g_autofree gchararray file_cwd = g_strdup_printf("/proc/%d/exe", self->pid);
+  g_autofree gchar *link_target = g_file_read_link (file_cwd, &local_error);
+
+  if (local_error != NULL) {
+    g_info ("Error reading link: %s", local_error->message);
+    return;
+  }
+  
+  if (!g_path_is_absolute (link_target))
+  {
+    g_autofree gchar *absolute_link_target = g_build_filename ("/etc", link_target, NULL);
+    g_free (link_target);
+    link_target = g_steal_pointer (&absolute_link_target);
+  }
+
+  char *last_match = strrchr(link_target, '/');
+
+  if (last_match != NULL) {
+      // Overwrite the character with the null terminator to truncate the string
+      *last_match = '\0'; 
+  }
+  g_autofree gchararray command = g_strdup_printf("xdg-open %s &", link_target);
+  system(command);
 }

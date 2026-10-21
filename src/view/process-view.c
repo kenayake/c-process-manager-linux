@@ -1,15 +1,17 @@
+#include "config.h"
 #include "process-view.h"
 #include "components/expander-cell.h"
 #include "components/numeric-cell.h"
 #include "components/table-cell.h"
-#include "config.h"
 #include "core/process-item.h"
 #include "core/process-model.h"
 #include "core/system-status.h"
+#include "gdk/gdk.h"
 #include "gio/gio.h"
 #include "glib-object.h"
 #include "glib.h"
 #include "glibconfig.h"
+#include "graphene.h"
 #include "gtk/gtkshortcut.h"
 #include "gtk/gtksingleselection.h"
 #include <gtk/gtk.h>
@@ -21,6 +23,11 @@ typedef struct {
   gdouble max;
 } UserData;
 
+typedef struct {
+  PmProcessView *process_view;
+  GtkListItem *list_item;
+} SelectionData;
+
 struct _PmProcessView {
   GObject parent_instance;
 
@@ -28,9 +35,66 @@ struct _PmProcessView {
   PmSystemStatus *sys_stat;
   GtkWidget *column_view;
   guint timeout_id;
+  GtkWidget *popover;
+  GtkSingleSelection *selection;
 };
 
 G_DEFINE_FINAL_TYPE(PmProcessView, pm_process_view, G_TYPE_OBJECT)
+
+static void kill_process(GSimpleAction *action, GVariant *parameter, gpointer user_data) {
+  GtkSingleSelection *selection = GTK_SINGLE_SELECTION(user_data);
+  PmProcessItem *item = gtk_single_selection_get_selected_item(selection);
+}
+
+static void open_properties(GSimpleAction *action, GVariant *parameter, gpointer user_data) {
+  GtkSingleSelection *selection = GTK_SINGLE_SELECTION(user_data);
+  PmProcessItem *item = gtk_single_selection_get_selected_item(selection);
+}
+
+static void open_dir(GSimpleAction *action, GVariant *parameter, gpointer user_data) {
+  GtkSingleSelection *selection = GTK_SINGLE_SELECTION(user_data);
+  GtkTreeListRow *activeTreeRow = gtk_single_selection_get_selected_item(selection);
+  PmProcessItem *selectedProcess = gtk_tree_list_row_get_item(activeTreeRow);
+
+  // const gchar *type_name = g_type_name(G_OBJECT_TYPE(child2));
+
+  process_item_open_folder(selectedProcess);
+}
+
+static GActionGroup *
+create_action_group (GtkSingleSelection *selection) {
+  const GActionEntry entries[] = {
+      { "kill", kill_process, NULL, NULL, NULL },
+      { "properties", open_properties, NULL, NULL, NULL },
+      { "open-dir", open_dir, NULL, NULL, NULL }
+  };
+  GSimpleActionGroup *group;
+
+  group = g_simple_action_group_new ();
+  g_action_map_add_action_entries (G_ACTION_MAP (group), entries, G_N_ELEMENTS (entries), selection);
+
+  return G_ACTION_GROUP (group);
+}
+
+static void create_popover(PmProcessView *self) {
+  GtkBuilder *builder;
+  GMenuModel *menu;
+  GActionGroup *group;
+  GtkColumnView *column_view;
+
+  column_view = GTK_COLUMN_VIEW(self->column_view);
+  builder = gtk_builder_new_from_resource("/com/github/kenayake/ProcessManager/view/process-view.ui");
+  menu = G_MENU_MODEL(gtk_builder_get_object(builder, "ctx_menu"));
+
+  group = create_action_group(self->selection);
+  gtk_widget_insert_action_group(GTK_WIDGET(column_view), "ctx", group);
+
+  self->popover = gtk_popover_menu_new_from_model(menu);
+  gtk_widget_set_parent(self->popover, GTK_WIDGET(column_view));
+  gtk_popover_set_has_arrow(GTK_POPOVER(self->popover), FALSE);
+}
+
+
 
 gboolean bind_numeric_to_label(GBinding *binding, const GValue *from_value,
                                GValue *to_value, gpointer user_data) {
@@ -46,18 +110,34 @@ gboolean bind_numeric_to_label(GBinding *binding, const GValue *from_value,
   return TRUE;
 }
 
+static void on_right_click(GtkGestureClick *self, gint n_press, gdouble x, gdouble y, gpointer user_data) {
+  PmProcessView *process_view = PM_PROCESS_VIEW(user_data);
+
+  GdkRectangle rect = { (int)x, (int)y, 1, 1 };
+
+  // GtkListView *list_view = GTK_LIST_VIEW(gtk_event_controller_get_widget(
+  //       GTK_EVENT_CONTROLLER(self)
+  //   ));
+  // GtkWidget *picked = gtk_widget_pick(GTK_WIDGET(list_view), x, y, GTK_PICK_DEFAULT);
+
+  // GtkWidget *row = gtk_widget_get_ancestor(picked, GTK_TYPE_LIST_ITEM_WIDGET);
+
+  gtk_popover_set_pointing_to(GTK_POPOVER(process_view->popover), &rect);
+  gtk_popover_popup(GTK_POPOVER(process_view->popover));
+}
+
 static void setup_expander_column(GtkSignalListItemFactory *factory,
                                   GtkListItem *list_item, gpointer user_data) {
   GtkWidget *expander;
-  // GtkWidget *label;
-
-  // expander = gtk_tree_expander_new();
-  // label = gtk_label_new(NULL);
-
-  // gtk_tree_expander_set_child(GTK_TREE_EXPANDER(expander), label);
+  GtkGesture *click;
 
   expander = pm_expander_cell_new(NULL);
   gtk_list_item_set_child(list_item, expander);
+
+  click = gtk_gesture_click_new();
+  gtk_gesture_single_set_button(GTK_GESTURE_SINGLE(click), GDK_BUTTON_SECONDARY);
+  g_signal_connect(click, "pressed", G_CALLBACK(on_right_click), (PmProcessView *)user_data);
+  gtk_widget_add_controller(expander, GTK_EVENT_CONTROLLER(click));
 }
 
 static void bind_expander_column(GtkSignalListItemFactory *factory,
@@ -191,7 +271,8 @@ static void unbind_generic_column(GtkSignalListItemFactory *factory,
 
 //! Note to self: dont turn it into builder factory, its not worth it
 static GtkColumnViewColumn *create_first_column(const gchar *prop_name,
-                                                const gchar *title) {
+                                                const gchar *title,
+                                                PmProcessView *process_view) {
   GtkListItemFactory *factory;
   GtkColumnViewColumn *column;
   GtkExpression *expr;
@@ -202,7 +283,7 @@ static GtkColumnViewColumn *create_first_column(const gchar *prop_name,
 
   factory = gtk_signal_list_item_factory_new();
 
-  g_signal_connect(factory, "setup", G_CALLBACK(setup_expander_column), NULL);
+  g_signal_connect(factory, "setup", G_CALLBACK(setup_expander_column), process_view);
 
   g_signal_connect(factory, "bind", G_CALLBACK(bind_expander_column),
                    user_data);
@@ -364,7 +445,6 @@ void pm_process_view_init(PmProcessView *self) {
   GtkSortListModel *sort_model;
   GtkSorter *view_sorter;
   GtkSorter *tree_sorter;
-  GtkSingleSelection *selection;
   PmSystemStatus *sys_stat;
   gdouble disk_usage;
   guint64 mem_total;
@@ -406,11 +486,11 @@ void pm_process_view_init(PmProcessView *self) {
       GTK_SORTER(gtk_tree_list_row_sorter_new(g_object_ref(view_sorter)));
   sort_model = gtk_sort_list_model_new(G_LIST_MODEL(tree_model), tree_sorter);
 
-  selection = gtk_single_selection_new(G_LIST_MODEL(sort_model));
+  self->selection = gtk_single_selection_new(G_LIST_MODEL(sort_model));
 
   // Apply sort model to column view sorter
   gtk_column_view_set_model(GTK_COLUMN_VIEW(column_view),
-                            GTK_SELECTION_MODEL(selection));
+                            GTK_SELECTION_MODEL(self->selection));
 
   // show column separators
   gtk_column_view_set_show_column_separators(GTK_COLUMN_VIEW(column_view),
@@ -418,7 +498,7 @@ void pm_process_view_init(PmProcessView *self) {
 
   // Append columns
   gtk_column_view_append_column(GTK_COLUMN_VIEW(column_view),
-                                create_first_column("name", "Name"));
+                                create_first_column("name", "Name", self));
   gtk_column_view_append_column(GTK_COLUMN_VIEW(column_view),
                                 create_string_column("status", "Status"));
   gtk_column_view_append_column(
@@ -441,6 +521,9 @@ void pm_process_view_init(PmProcessView *self) {
   self->column_view = column_view;
   self->model = G_LIST_MODEL(model);
   self->sys_stat = sys_stat;
+
+  // Context Menu
+  create_popover(self);
 }
 
 PmProcessView *process_view_new(void) {

@@ -13,6 +13,10 @@ columnview.column-separators listview row cell:not(:first-child) {
     border-left: 2px solid rgb(210, 210, 210);
 }
 
+columnview header button {
+  padding-top: 40px;
+  border-left: 2px solid rgb(210, 210, 210);
+}
 
 treeexpander indent{
   -gtk-icon-size: 16px;

@@ -1,4 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
-  
+  <menu id="ctx_menu">
+    <section>
+      <item>
+        <attribute name="label" translatable="yes">Properties</attribute>
+        <attribute name="action">ctx.properties</attribute>
+      </item>
+      <item>
+        <attribute name="label" translatable="yes">Open File Location</attribute>
+        <attribute name="action">ctx.open-dir</attribute>
+      </item>
+    </section>
+    <section>
+      <item>
+        <attribute name="label" translatable="yes">Terminate</attribute>
+        <attribute name="action">ctx.kill</attribute>
+      </item>
+    </section>
+  </menu>
 </interface>

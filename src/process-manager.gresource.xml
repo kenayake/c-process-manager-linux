@@ -4,6 +4,8 @@
     <file preprocess="xml-stripblanks">process-manager-window.ui</file>
     <file preprocess="xml-stripblanks">gtk/help-overlay.ui</file>
     <file preprocess="xml-stripblanks">components/table-cell.ui</file>
+    <file preprocess="xml-stripblanks">components/header-cell.ui</file>
     <file preprocess="xml-stripblanks">components/expander-cell.ui</file>
+    <file preprocess="xml-stripblanks">view/process-view.ui</file>
   </gresource>
 </gresources>

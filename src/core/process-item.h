@@ -39,4 +39,6 @@ void process_item_set_parent(PmProcessItem *item);
 
 void process_item_print_model(GListModel *list, const gchar *prefix);
 
+void process_item_open_folder(PmProcessItem *self);
+
 G_END_DECLS
