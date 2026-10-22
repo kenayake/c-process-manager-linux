@@ -39,6 +39,10 @@ void process_item_set_parent(PmProcessItem *item);
 
 void process_item_print_model(GListModel *list, const gchar *prefix);
 
-void process_item_open_folder(PmProcessItem *self);
+gboolean process_item_open_folder(PmProcessItem *self, GError **error);
+
+gboolean process_item_kill_process(PmProcessItem *self, GError **error);
+
+void process_item_force_stop(PmProcessItem *self);
 
 G_END_DECLS

@@ -11,10 +11,17 @@
 #include <bits/time.h>
 #include <gtk/gtk.h>
 #include <pwd.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+
+#define PM_PROCESS_ITEM_ERROR (g_quark_from_static_string("pm-process-item-error"))
+
+typedef enum {
+    PROCESS_ITEM_NO_PERMISSION,
+} PmProcessItemError;
 
 struct _PmProcessItem {
   GObject parent_instance;
@@ -428,14 +435,13 @@ void process_item_print_model(GListModel *list, const gchar *prefix) {
   }
 }
 
-void process_item_open_folder(PmProcessItem *self) {
-  g_autoptr(GError) local_error = NULL;
+gboolean process_item_open_folder(PmProcessItem *self, GError **error) {
   g_autofree gchararray file_cwd = g_strdup_printf("/proc/%d/exe", self->pid);
-  g_autofree gchar *link_target = g_file_read_link (file_cwd, &local_error);
+  g_autofree gchar *link_target = g_file_read_link (file_cwd, error);
 
-  if (local_error != NULL) {
-    g_info ("Error reading link: %s", local_error->message);
-    return;
+  if (error != NULL) {
+    g_warning ("Error reading link: %s", (*error)->message);
+    return FALSE;
   }
   
   if (!g_path_is_absolute (link_target))
@@ -451,6 +457,45 @@ void process_item_open_folder(PmProcessItem *self) {
       // Overwrite the character with the null terminator to truncate the string
       *last_match = '\0'; 
   }
-  g_autofree gchararray command = g_strdup_printf("xdg-open %s &", link_target);
-  system(command);
+  g_autofree gchararray command = g_strdup_printf("xdg-open %s", link_target);
+  g_autoptr(GFile) file = g_file_new_for_path(link_target);
+
+  g_app_info_launch_default_for_uri(g_file_get_uri(file), NULL, error);
+
+  if (error != NULL) {
+      g_warning("Failed to open file explorer: %s", (*error)->message);
+      return FALSE;
+  }
+
+  return TRUE;
+}
+
+gboolean process_item_kill_process(PmProcessItem *self, GError **error) {
+  int result = kill(self->pid, SIGTERM);
+
+  if (result < 0) {
+    int saved_err = errno;
+
+    const gchar *error_message = g_strerror(saved_err);
+
+    *error = g_error_new_literal(PM_PROCESS_ITEM_ERROR, PROCESS_ITEM_NO_PERMISSION, error_message);
+
+    g_warning("Syscall failed: %s (System Error Code: %d)", error_message, saved_err);
+
+    return FALSE;
+  }
+
+  return TRUE;
+}
+
+void process_item_force_stop(PmProcessItem *self) {
+  int result = kill(self->pid, SIGKILL);
+
+  if (result < 0) {
+    int saved_err = errno;
+
+    const gchar *error_message = g_strerror(saved_err);
+
+    g_warning("Syscall failed: %s (System Error Code: %d)", error_message, saved_err);
+  }
 }

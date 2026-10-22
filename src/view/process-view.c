@@ -15,12 +15,14 @@
 #include "gtk/gtkshortcut.h"
 #include "gtk/gtksingleselection.h"
 #include <gtk/gtk.h>
+#include <signal.h>
 #include <stdio.h>
 
 typedef struct {
   const gchar *name;
   const gchar *suffix;
   gdouble max;
+  PmProcessView *process_view;
 } UserData;
 
 typedef struct {
@@ -41,28 +43,51 @@ struct _PmProcessView {
 
 G_DEFINE_FINAL_TYPE(PmProcessView, pm_process_view, G_TYPE_OBJECT)
 
+static void show_alert(PmProcessView *self, const gchar *title, GError *error) {
+  g_autoptr(GtkAlertDialog) alert;
+
+  GtkRoot *root = gtk_widget_get_root (GTK_WIDGET(self->column_view));
+  GtkWindow *parent_window = GTK_WINDOW (root);
+
+  alert = gtk_alert_dialog_new("%s", title);
+  gtk_alert_dialog_set_detail(alert, error->message);
+  gtk_alert_dialog_set_modal(alert, TRUE);
+  gtk_alert_dialog_show(alert, parent_window);
+}
+
 static void kill_process(GSimpleAction *action, GVariant *parameter, gpointer user_data) {
-  GtkSingleSelection *selection = GTK_SINGLE_SELECTION(user_data);
-  PmProcessItem *item = gtk_single_selection_get_selected_item(selection);
+  g_autoptr(GError) error = NULL;
+  PmProcessView *self = PM_PROCESS_VIEW(user_data);
+  GtkTreeListRow *activeTreeRow = gtk_single_selection_get_selected_item(self->selection);
+  PmProcessItem *selectedProcess = gtk_tree_list_row_get_item(activeTreeRow);
+
+  if (!process_item_kill_process(selectedProcess, &error)) {
+    show_alert(self, "Kill Process Failed", error);
+  }
 }
 
 static void open_properties(GSimpleAction *action, GVariant *parameter, gpointer user_data) {
-  GtkSingleSelection *selection = GTK_SINGLE_SELECTION(user_data);
-  PmProcessItem *item = gtk_single_selection_get_selected_item(selection);
+  PmProcessView *self = PM_PROCESS_VIEW(user_data);
+  GtkTreeListRow *activeTreeRow = gtk_single_selection_get_selected_item(self->selection);
+  PmProcessItem *selectedProcess = gtk_tree_list_row_get_item(activeTreeRow);
+
+  
 }
 
 static void open_dir(GSimpleAction *action, GVariant *parameter, gpointer user_data) {
-  GtkSingleSelection *selection = GTK_SINGLE_SELECTION(user_data);
-  GtkTreeListRow *activeTreeRow = gtk_single_selection_get_selected_item(selection);
+  g_autoptr(GError) error = NULL;
+  PmProcessView *self = PM_PROCESS_VIEW(user_data);
+  GtkTreeListRow *activeTreeRow = gtk_single_selection_get_selected_item(self->selection);
   PmProcessItem *selectedProcess = gtk_tree_list_row_get_item(activeTreeRow);
-
+  
   // const gchar *type_name = g_type_name(G_OBJECT_TYPE(child2));
-
-  process_item_open_folder(selectedProcess);
+  if (!process_item_open_folder(selectedProcess, &error)) {
+    show_alert(self, "Open Directory Failed", error);
+  }
 }
 
 static GActionGroup *
-create_action_group (GtkSingleSelection *selection) {
+create_action_group (PmProcessView *self) {
   const GActionEntry entries[] = {
       { "kill", kill_process, NULL, NULL, NULL },
       { "properties", open_properties, NULL, NULL, NULL },
@@ -71,7 +96,7 @@ create_action_group (GtkSingleSelection *selection) {
   GSimpleActionGroup *group;
 
   group = g_simple_action_group_new ();
-  g_action_map_add_action_entries (G_ACTION_MAP (group), entries, G_N_ELEMENTS (entries), selection);
+  g_action_map_add_action_entries (G_ACTION_MAP (group), entries, G_N_ELEMENTS (entries), self);
 
   return G_ACTION_GROUP (group);
 }
@@ -86,15 +111,13 @@ static void create_popover(PmProcessView *self) {
   builder = gtk_builder_new_from_resource("/com/github/kenayake/ProcessManager/view/process-view.ui");
   menu = G_MENU_MODEL(gtk_builder_get_object(builder, "ctx_menu"));
 
-  group = create_action_group(self->selection);
+  group = create_action_group(self);
   gtk_widget_insert_action_group(GTK_WIDGET(column_view), "ctx", group);
 
   self->popover = gtk_popover_menu_new_from_model(menu);
   gtk_widget_set_parent(self->popover, GTK_WIDGET(column_view));
   gtk_popover_set_has_arrow(GTK_POPOVER(self->popover), FALSE);
 }
-
-
 
 gboolean bind_numeric_to_label(GBinding *binding, const GValue *from_value,
                                GValue *to_value, gpointer user_data) {
@@ -112,18 +135,36 @@ gboolean bind_numeric_to_label(GBinding *binding, const GValue *from_value,
 
 static void on_right_click(GtkGestureClick *self, gint n_press, gdouble x, gdouble y, gpointer user_data) {
   PmProcessView *process_view = PM_PROCESS_VIEW(user_data);
+  GtkListItem *list_item =
+      g_object_get_data(G_OBJECT(self), "list-item");
+  guint position = gtk_list_item_get_position(list_item);
+  GtkWidget *source;
+  graphene_point_t point;
+  graphene_point_t point_in_view;
+  GdkRectangle rect;
+  GtkPopover *popover;
 
-  GdkRectangle rect = { (int)x, (int)y, 1, 1 };
+  if (position == GTK_INVALID_LIST_POSITION)
+    return;
 
-  // GtkListView *list_view = GTK_LIST_VIEW(gtk_event_controller_get_widget(
-  //       GTK_EVENT_CONTROLLER(self)
-  //   ));
-  // GtkWidget *picked = gtk_widget_pick(GTK_WIDGET(list_view), x, y, GTK_PICK_DEFAULT);
+  gtk_single_selection_set_selected(process_view->selection, position);
 
-  // GtkWidget *row = gtk_widget_get_ancestor(picked, GTK_TYPE_LIST_ITEM_WIDGET);
+  source = gtk_event_controller_get_widget(GTK_EVENT_CONTROLLER(self));
+  point = GRAPHENE_POINT_INIT((float)x, (float)y);
 
-  gtk_popover_set_pointing_to(GTK_POPOVER(process_view->popover), &rect);
-  gtk_popover_popup(GTK_POPOVER(process_view->popover));
+  if (!gtk_widget_compute_point(source, process_view->column_view,
+                                &point, &point_in_view)) {
+    g_warning("Could not convert click coordinates to column-view coordinates");
+    return;
+  }
+
+  rect = (GdkRectangle){ (int)point_in_view.x, (int)point_in_view.y, 1, 1 };
+  popover = GTK_POPOVER(process_view->popover);
+
+  gtk_popover_set_pointing_to(popover, &rect);
+  gtk_popover_set_position(popover, GTK_POS_BOTTOM);
+  gtk_popover_set_offset(popover, 8, 8);
+  gtk_popover_popup(popover);
 }
 
 static void setup_expander_column(GtkSignalListItemFactory *factory,
@@ -136,7 +177,10 @@ static void setup_expander_column(GtkSignalListItemFactory *factory,
 
   click = gtk_gesture_click_new();
   gtk_gesture_single_set_button(GTK_GESTURE_SINGLE(click), GDK_BUTTON_SECONDARY);
-  g_signal_connect(click, "pressed", G_CALLBACK(on_right_click), (PmProcessView *)user_data);
+  g_object_set_data(G_OBJECT(click), "list-item", list_item);
+  g_signal_connect_object(click, "pressed",
+                        G_CALLBACK(on_right_click),
+                        user_data, 0);
   gtk_widget_add_controller(expander, GTK_EVENT_CONTROLLER(click));
 }
 
@@ -174,20 +218,38 @@ static void bind_expander_column(GtkSignalListItemFactory *factory,
 static void setup_generic_column(GtkSignalListItemFactory *factory,
                                  GtkListItem *list_item, gpointer user_data) {
   GtkWidget *label;
+  GtkGesture *click;
 
   label = pm_table_cell_new(NULL);
 
   gtk_list_item_set_child(list_item, label);
+
+  click = gtk_gesture_click_new();
+  gtk_gesture_single_set_button(GTK_GESTURE_SINGLE(click), GDK_BUTTON_SECONDARY);
+  g_object_set_data(G_OBJECT(click), "list-item", list_item);
+  g_signal_connect_object(click, "pressed",
+                        G_CALLBACK(on_right_click),
+                        user_data, 0);
+  gtk_widget_add_controller(label, GTK_EVENT_CONTROLLER(click));
 }
 
 static void setup_numeric_column(GtkSignalListItemFactory *factory,
                                  GtkListItem *list_item, gpointer user_data) {
   GtkWidget *label;
   UserData *data = user_data;
+  GtkGesture *click;
 
   label = pm_numeric_cell_new(0.0, data->max, data->suffix);
 
   gtk_list_item_set_child(list_item, label);
+
+  click = gtk_gesture_click_new();
+  gtk_gesture_single_set_button(GTK_GESTURE_SINGLE(click), GDK_BUTTON_SECONDARY);
+  g_object_set_data(G_OBJECT(click), "list-item", list_item);
+  g_signal_connect_object(click, "pressed",
+                        G_CALLBACK(on_right_click),
+                        data->process_view, 0);
+  gtk_widget_add_controller(label, GTK_EVENT_CONTROLLER(click));
 }
 
 static void bind_string_column(GtkSignalListItemFactory *factory,
@@ -311,7 +373,8 @@ static GtkColumnViewColumn *create_first_column(const gchar *prop_name,
 static GtkColumnViewColumn *create_numeric_column(const gchar *prop_name,
                                                   const gchar *title,
                                                   const gchar *suffix,
-                                                  const gdouble max) {
+                                                  const gdouble max,
+                                                PmProcessView *self) {
   GtkListItemFactory *factory;
   GtkColumnViewColumn *column;
   GtkExpression *expr;
@@ -320,6 +383,7 @@ static GtkColumnViewColumn *create_numeric_column(const gchar *prop_name,
   user_data->name = prop_name;
   user_data->suffix = suffix;
   user_data->max = max;
+  user_data->process_view = self;
 
   factory = gtk_signal_list_item_factory_new();
 
@@ -349,7 +413,8 @@ static GtkColumnViewColumn *create_numeric_column(const gchar *prop_name,
 }
 
 static GtkColumnViewColumn *create_string_column(const gchar *prop_name,
-                                                 const gchar *title) {
+                                                 const gchar *title,
+                                                  PmProcessView *self) {
   GtkListItemFactory *factory;
   GtkColumnViewColumn *column;
   GtkExpression *expr;
@@ -360,7 +425,7 @@ static GtkColumnViewColumn *create_string_column(const gchar *prop_name,
 
   factory = gtk_signal_list_item_factory_new();
 
-  g_signal_connect(factory, "setup", G_CALLBACK(setup_generic_column), NULL);
+  g_signal_connect(factory, "setup", G_CALLBACK(setup_generic_column), self);
 
   g_signal_connect(factory, "bind", G_CALLBACK(bind_string_column), user_data);
 
@@ -500,20 +565,20 @@ void pm_process_view_init(PmProcessView *self) {
   gtk_column_view_append_column(GTK_COLUMN_VIEW(column_view),
                                 create_first_column("name", "Name", self));
   gtk_column_view_append_column(GTK_COLUMN_VIEW(column_view),
-                                create_string_column("status", "Status"));
+                                create_string_column("status", "Status", self));
   gtk_column_view_append_column(
       GTK_COLUMN_VIEW(column_view),
-      create_numeric_column("cpu", "CPU", "%", 100.0));
+      create_numeric_column("cpu", "CPU", "%", 100.0, self));
   gtk_column_view_append_column(
       GTK_COLUMN_VIEW(column_view),
-      create_numeric_column("memory", "Memory", " MB", (double)mem_total/1e+6));
+      create_numeric_column("memory", "Memory", " MB", (double)mem_total/1e+6, self));
   gtk_column_view_append_column(
       GTK_COLUMN_VIEW(column_view),
-      create_numeric_column("disk", "Disk", " MB/s", disk_usage));
+      create_numeric_column("disk", "Disk", " MB/s", disk_usage, self));
   gtk_column_view_append_column(GTK_COLUMN_VIEW(column_view),
-                                create_string_column("user", "User"));
+                                create_string_column("user", "User", self));
   gtk_column_view_append_column(GTK_COLUMN_VIEW(column_view),
-                                create_string_column("priority", "Priority"));
+                                create_string_column("priority", "Priority", self));
 
   g_signal_connect(column_view, "map", G_CALLBACK(on_view_map), self);
   g_signal_connect(column_view, "unmap", G_CALLBACK(on_view_unmap), self);
