@@ -25,46 +25,98 @@ static gchar *parse_comm(gchar *str) {
 }
 
 static gboolean parse_stat(long pid, ProcessRaw *data, GError **error) {
-  g_auto(GStrv) stat_list = NULL;
+  g_auto(GStrv) stat_fields = NULL;
   g_autofree gchar *contents = NULL;
+  g_autofree gchar *comm = NULL;
   gsize length = 0;
-  gint64 result;
+  const gchar *open;
+  const gchar *close;
+  const gchar *state_field = NULL;
+  const gchar *pgrp_field = NULL;
+  const gchar *utime_field = NULL;
+  const gchar *stime_field = NULL;
+  const gchar *priority_field = NULL;
+  const gchar *nice_field = NULL;
+  gint64 pgrp;
+  gint64 utime;
+  gint64 stime;
+  gint64 priority;
+  gint64 nice;
 
   g_autofree gchar *filepath = g_strdup_printf("/proc/%ld/stat", pid);
 
   if (g_file_get_contents(filepath, &contents, &length, error)) {
-    stat_list = g_strsplit_set(contents, " ", -1);
+    open = strchr(contents, '(');
+    close = strrchr(contents, ')');
+    if (open == NULL || close == NULL || close <= open) {
+      g_set_error_literal(error, G_IO_ERROR, G_IO_ERROR_INVALID_DATA,
+                          "Malformed /proc stat command field");
+      return FALSE;
+    }
+
+    comm = parse_comm(contents);
+    stat_fields = g_strsplit_set(close + 1, " \t\n", -1);
+
+    for (gsize i = 0, field_number = 3; stat_fields[i] != NULL; i++) {
+      if (stat_fields[i][0] == '\0') {
+        continue;
+      }
+
+      switch (field_number) {
+      case 3:
+        state_field = stat_fields[i];
+        break;
+      case 5:
+        pgrp_field = stat_fields[i];
+        break;
+      case 14:
+        utime_field = stat_fields[i];
+        break;
+      case 15:
+        stime_field = stat_fields[i];
+        break;
+      case 18:
+        priority_field = stat_fields[i];
+        break;
+      case 19:
+        nice_field = stat_fields[i];
+        break;
+      default:
+        break;
+      }
+      field_number++;
+    }
+
+    if (state_field == NULL || state_field[0] == '\0' ||
+        state_field[1] != '\0' || pgrp_field == NULL ||
+        utime_field == NULL || stime_field == NULL ||
+        priority_field == NULL || nice_field == NULL) {
+      g_set_error_literal(error, G_IO_ERROR, G_IO_ERROR_INVALID_DATA,
+                          "Malformed /proc stat fields");
+      return FALSE;
+    }
+
+    if (!g_ascii_string_to_signed(pgrp_field, 10, G_MININT, G_MAXINT, &pgrp,
+                                  error) ||
+        !g_ascii_string_to_signed(utime_field, 10, G_MININT64, G_MAXINT64,
+                                  &utime, error) ||
+        !g_ascii_string_to_signed(stime_field, 10, G_MININT64, G_MAXINT64,
+                                  &stime, error) ||
+        !g_ascii_string_to_signed(priority_field, 10, G_MININT, G_MAXINT,
+                                  &priority, error) ||
+        !g_ascii_string_to_signed(nice_field, 10, G_MININT, G_MAXINT, &nice,
+                                  error)) {
+      return FALSE;
+    }
 
     data->pid = pid;
-    data->comm = parse_comm(stat_list[1]);
-    data->state = g_strdup(stat_list[2]);
-    if (!g_ascii_string_to_signed(stat_list[4], 10, G_MINLONG, G_MAXLONG,
-                                  &result, error)) {
-      return FALSE;
-    };
-    data->pgrp = result;
-    if (!g_ascii_string_to_signed(stat_list[17], 10, G_MINLONG, G_MAXLONG,
-                                  &result, error)) {
-      return FALSE;
-    };
-    data->priority = result;
-    if (!g_ascii_string_to_signed(stat_list[18], 10, G_MINLONG, G_MAXLONG,
-                                 &result, error)) {
-      return FALSE;
-    };
-    data->nice = result;
-    if (!g_ascii_string_to_signed(stat_list[18], 10, G_MINLONG, G_MAXLONG,
-                                 &result, error)) {
-      return FALSE;
-    };
-    if (!g_ascii_string_to_signed(stat_list[13], 10, G_MININT64, G_MAXINT64, &data->cpu_usage.utime, error)) {
-      return FALSE;
-    }
-    if (!g_ascii_string_to_signed(stat_list[14], 10, G_MININT64, G_MAXINT64, &data->cpu_usage.stime, error)) {
-      return FALSE;
-    }
-
-    // g_info("utime: %s, stime: %s", stat_list[13], stat_list[14]);
+    data->comm = g_steal_pointer(&comm);
+    data->state = g_strdup(state_field);
+    data->pgrp = pgrp;
+    data->cpu_usage.utime = utime;
+    data->cpu_usage.stime = stime;
+    data->priority = priority;
+    data->nice = nice;
 
     return TRUE;
   }
