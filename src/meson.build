@@ -11,13 +11,13 @@ process_manager_sources = [
   'util/disk-usage-type.c',
   'util/cpu-usage-type.c',
   'components/table-cell.c',
-  # 'components/header-cell.c',
+  'components/process-details.c',
   'components/expander-cell.c',
   'components/numeric-cell.c'
 ]
 
 process_manager_deps = [
-  dependency('gtk4'),
+  dependency('gtk4', version: '>= 4.10'),
 ]
 
 process_manager_sources += gnome.compile_resources('process-manager-resources',

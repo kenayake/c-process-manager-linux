@@ -1,3 +1,4 @@
+#include "components/process-details.h"
 #include "config.h"
 #include "process-view.h"
 #include "components/expander-cell.h"
@@ -17,6 +18,8 @@
 #include <gtk/gtk.h>
 #include <signal.h>
 #include <stdio.h>
+#include <sys/types.h>
+#include <time.h>
 
 typedef struct {
   const gchar *name;
@@ -70,8 +73,16 @@ static void open_properties(GSimpleAction *action, GVariant *parameter, gpointer
   PmProcessView *self = PM_PROCESS_VIEW(user_data);
   GtkTreeListRow *activeTreeRow = gtk_single_selection_get_selected_item(self->selection);
   PmProcessItem *selectedProcess = gtk_tree_list_row_get_item(activeTreeRow);
+  GtkRoot *root = gtk_widget_get_root (GTK_WIDGET(self->column_view));
+  GtkWindow *parent_window = GTK_WINDOW (root);
 
-  
+  pid_t pid; gchararray name;
+  PmProcessDetails *details;
+
+  g_object_get(selectedProcess, "pid", &pid, "name", &name, NULL);
+
+  details = process_details_new(pid, name, parent_window);
+  process_details_show(details);
 }
 
 static void open_dir(GSimpleAction *action, GVariant *parameter, gpointer user_data) {
