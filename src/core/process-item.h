@@ -45,4 +45,6 @@ gboolean process_item_kill_process(PmProcessItem *self, GError **error);
 
 void process_item_force_stop(PmProcessItem *self);
 
+gboolean process_item_match_func(gpointer item, gpointer user_data);
+
 G_END_DECLS

@@ -9,7 +9,7 @@ G_BEGIN_DECLS
 
 G_DECLARE_FINAL_TYPE(PmProcessView, pm_process_view, PM, PROCESS_VIEW, GObject)
 
-PmProcessView *process_view_new(void);
+PmProcessView *process_view_new(GtkFilter *filter);
 
 GtkWidget *process_view_get_view(PmProcessView *view);
 

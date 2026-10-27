@@ -8,10 +8,9 @@
     <property name="titlebar">
       <object class="GtkHeaderBar">
         <property name="title-widget">
-          <object class="GtkSearchEntry" id="search_bar">
-
-          </object>
+          <object class="PmSearchBar" id="search_bar"/>
         </property>
+        <property name="decoration-layout">icon:minimize,maximize,close</property>
         <child type="start">
           <object class="GtkLabel">
             <property name="label">Process Manager</property>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="PmSearchBar" parent="GtkBox">
+    <child>
+      <object class="GtkSearchEntry" id="search_entry">
+        <property name="placeholder-text">Type a name or PID to search</property>
+        <property name="width-chars">30</property>
+      </object>
+    </child>
+  </template>
+</interface>

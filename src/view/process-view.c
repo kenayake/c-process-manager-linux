@@ -1,4 +1,5 @@
 #include "components/process-details.h"
+#include "components/search-bar.h"
 #include "config.h"
 #include "process-view.h"
 #include "components/expander-cell.h"
@@ -15,8 +16,10 @@
 #include "graphene.h"
 #include "gtk/gtkshortcut.h"
 #include "gtk/gtksingleselection.h"
+#include "process-manager-window.h"
 #include <gtk/gtk.h>
 #include <signal.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <time.h>
@@ -42,6 +45,7 @@ struct _PmProcessView {
   guint timeout_id;
   GtkWidget *popover;
   GtkSingleSelection *selection;
+  GtkFilterListModel *filter_model;
 };
 
 G_DEFINE_FINAL_TYPE(PmProcessView, pm_process_view, G_TYPE_OBJECT)
@@ -560,7 +564,9 @@ void pm_process_view_init(PmProcessView *self) {
       g_object_ref(gtk_column_view_get_sorter(GTK_COLUMN_VIEW(column_view)));
   tree_sorter =
       GTK_SORTER(gtk_tree_list_row_sorter_new(g_object_ref(view_sorter)));
-  sort_model = gtk_sort_list_model_new(G_LIST_MODEL(tree_model), tree_sorter);
+
+  self->filter_model = gtk_filter_list_model_new(G_LIST_MODEL(tree_model), NULL);
+  sort_model = gtk_sort_list_model_new(G_LIST_MODEL(self->filter_model), tree_sorter);
 
   self->selection = gtk_single_selection_new(G_LIST_MODEL(sort_model));
 
@@ -577,6 +583,8 @@ void pm_process_view_init(PmProcessView *self) {
                                 create_first_column("name", "Name", self));
   gtk_column_view_append_column(GTK_COLUMN_VIEW(column_view),
                                 create_string_column("status", "Status", self));
+  gtk_column_view_append_column(GTK_COLUMN_VIEW(column_view),
+                                create_numeric_column("pid", "PID", NULL, INTMAX_MAX, self));
   gtk_column_view_append_column(
       GTK_COLUMN_VIEW(column_view),
       create_numeric_column("cpu", "CPU", "%", 100.0, self));
@@ -602,9 +610,10 @@ void pm_process_view_init(PmProcessView *self) {
   create_popover(self);
 }
 
-PmProcessView *process_view_new(void) {
+PmProcessView *process_view_new(GtkFilter *filter) {
   PmProcessView *process_view = g_object_new(PM_TYPE_PROCESS_VIEW, NULL);
   process_model_refresh(G_LIST_STORE(process_view->model));
+  gtk_filter_list_model_set_filter(process_view->filter_model, filter);
   return process_view;
 }
 

@@ -12,6 +12,7 @@
 #include <gtk/gtk.h>
 #include <pwd.h>
 #include <signal.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -439,7 +440,7 @@ gboolean process_item_open_folder(PmProcessItem *self, GError **error) {
   g_autofree gchararray file_cwd = g_strdup_printf("/proc/%d/exe", self->pid);
   g_autofree gchar *link_target = g_file_read_link (file_cwd, error);
 
-  if (error != NULL) {
+  if (error != NULL && *error != NULL) {
     g_warning ("Error reading link: %s", (*error)->message);
     return FALSE;
   }
@@ -462,7 +463,7 @@ gboolean process_item_open_folder(PmProcessItem *self, GError **error) {
 
   g_app_info_launch_default_for_uri(g_file_get_uri(file), NULL, error);
 
-  if (error != NULL) {
+  if (error != NULL && *error != NULL) {
       g_warning("Failed to open file explorer: %s", (*error)->message);
       return FALSE;
   }
@@ -497,5 +498,43 @@ void process_item_force_stop(PmProcessItem *self) {
     const gchar *error_message = g_strerror(saved_err);
 
     g_warning("Syscall failed: %s (System Error Code: %d)", error_message, saved_err);
+  }
+}
+
+gboolean process_item_match_func(gpointer item, gpointer user_data) {
+  gchararray pid;
+  const char* search = user_data;
+  GtkTreeListRow *row = GTK_TREE_LIST_ROW(item);
+  PmProcessItem *self = gtk_tree_list_row_get_item(row);
+
+  if (!self) { 
+    return FALSE;
+  }
+
+  if (!search || *search == '\0') {
+    return TRUE;
+  }
+
+  pid = g_strdup_printf("%jd", (intmax_t)self->pid);
+
+  if (g_str_match_string(search, pid, TRUE) || g_str_match_string(search, self->name, TRUE)) {
+    return TRUE;
+  } else {
+    // check if children matches search
+    if (self->has_children) {
+      guint size = g_list_model_get_n_items(G_LIST_MODEL(self->children));
+
+      for (int i = 0; i < size; i++) {
+        g_autoptr(PmProcessItem) child = g_list_model_get_item(G_LIST_MODEL(self->children), i);
+        g_autofree gchararray child_pid = g_strdup_printf("%jd", (intmax_t)child->pid);
+
+        if (g_str_match_string(search, child_pid, TRUE) || g_str_match_string(search, child->name, TRUE)) {
+          gtk_tree_list_row_set_expanded(row, TRUE);
+          return TRUE;
+        }
+      }
+    }
+
+    return FALSE;
   }
 }

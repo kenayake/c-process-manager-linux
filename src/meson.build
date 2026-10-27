@@ -13,6 +13,7 @@ process_manager_sources = [
   'components/table-cell.c',
   'components/process-details.c',
   'components/expander-cell.c',
+  'components/search-bar.c',
   'components/numeric-cell.c'
 ]
 

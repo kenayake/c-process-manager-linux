@@ -91,7 +91,7 @@ static gchararray numeric_label_binding_closure(GtkWidget *self) {
   }
   
   return g_strdup_printf(
-      obj->suffix != NULL ? "%.1f%s" : "%.1f", obj->raw_value, obj->suffix);
+      obj->suffix != NULL ? "%.1f%s" : "%.0f", obj->raw_value, obj->suffix);
 }
 
 static void pm_numeric_cell_class_init(PmNumericCellClass *klass) {
