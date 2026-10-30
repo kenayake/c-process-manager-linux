@@ -75,6 +75,10 @@ static void pm_numeric_cell_finalize(GObject *object) {
 static gchararray numeric_label_binding_closure(GtkWidget *self) {
   PmNumericCell *obj = PM_NUMERIC_CELL(self);
 
+  if (obj->suffix == NULL) {
+    return g_strdup_printf("%.0f", obj->raw_value);
+  }
+
   for (int i = 1; i < 5; i++) {
     g_autofree gchararray class = g_strdup_printf("accent%d", i);
     gtk_widget_remove_css_class(self, class);
@@ -91,7 +95,7 @@ static gchararray numeric_label_binding_closure(GtkWidget *self) {
   }
   
   return g_strdup_printf(
-      obj->suffix != NULL ? "%.1f%s" : "%.0f", obj->raw_value, obj->suffix);
+      "%.1f%s", obj->raw_value, obj->suffix);
 }
 
 static void pm_numeric_cell_class_init(PmNumericCellClass *klass) {
