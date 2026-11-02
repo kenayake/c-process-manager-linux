@@ -1,7 +1,7 @@
 [Desktop Entry]
 Name=Process-manager
 Exec=process-manager
-Icon=com.github.kenayake.ProcessManager
+Icon=logo
 Terminal=false
 Type=Application
 Categories=Utility;

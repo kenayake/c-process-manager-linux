@@ -117,5 +117,6 @@ static void process_manager_application_init(ProcessManagerApplication *self) {
   gtk_application_set_accels_for_action(GTK_APPLICATION(self), "app.quit",
                                         (const char *[]){"<control>q", NULL});
 
+  // Testing
   // g_signal_connect(self, "window-added", G_CALLBACK(on_startup), NULL);
 }

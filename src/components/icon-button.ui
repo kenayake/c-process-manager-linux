@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="PmIconButton" parent="GtkButton">
+    <property name="has-frame">false</property>
+    <property name="child">
+      <object class="GtkBox">
+        <property name="orientation">horizontal</property>
+        <property name="spacing">8</property>
+        <child>
+          <object class="GtkImage" id="icon"/>
+        </child>
+        <child>
+          <object class="GtkLabel" id="text"/>
+        </child>
+      </object>
+    </property>
+  </template>
+</interface>

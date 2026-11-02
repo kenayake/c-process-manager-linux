@@ -12,18 +12,21 @@
         </property>
         <property name="decoration-layout">icon:minimize,maximize,close</property>
         <child type="start">
-          <object class="GtkLabel">
-            <property name="label">Process Manager</property>
+          <object class="GtkBox">
+            <property name="spacing">16</property>
+            <child>
+              <object class="GtkImage">
+                <property name="resource">/com/github/kenayake/ProcessManager/images/logo_small.png</property>
+                <property name="pixel-size">24</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkLabel">
+                <property name="label">Process Manager</property>
+              </object>
+            </child>
           </object>
         </child>
-      </object>
-    </property>
-    <property name="child">
-      <!-- TODO: Move to it's own layout -->
-      <object class="GtkScrolledWindow" id="scrolled_window">
-        <property name="vexpand">true</property>
-        <property name="hexpand">true</property>
-
       </object>
     </property>
   </template>

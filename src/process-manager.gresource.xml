@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gresources>
   <gresource prefix="/com/github/kenayake/ProcessManager">
+    <!-- UI files -->
     <file preprocess="xml-stripblanks">process-manager-window.ui</file>
     <file preprocess="xml-stripblanks">gtk/help-overlay.ui</file>
     <file preprocess="xml-stripblanks">components/table-cell.ui</file>
@@ -8,6 +9,13 @@
     <file preprocess="xml-stripblanks">components/expander-cell.ui</file>
     <file preprocess="xml-stripblanks">components/search-bar.ui</file>
     <file preprocess="xml-stripblanks">components/process-details.ui</file>
+    <file preprocess="xml-stripblanks">components/run-window.ui</file>
+    <file preprocess="xml-stripblanks">components/icon-button.ui</file>
+    <file preprocess="xml-stripblanks">layout/process-layout.ui</file>
     <file preprocess="xml-stripblanks">view/process-view.ui</file>
+
+    <!-- Images -->
+    <file>images/logo_large.png</file>
+    <file>images/logo_small.png</file>
   </gresource>
 </gresources>

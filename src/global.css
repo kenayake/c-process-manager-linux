@@ -36,6 +36,20 @@ entry.search {
   font-size: large;
 }
 
+.process-header {
+  padding: 16px;
+  border-bottom: 2px solid rgb(210, 210, 210);
+}
+
+.process-header>label {
+  font-size: larger;
+  font-weight: 600;
+}
+
+.process-layout {
+  background-color: white;
+}
+
 /* For process metric colors */
 .accent1 {
   background-color: #c7e0f4;

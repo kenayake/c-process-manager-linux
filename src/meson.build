@@ -3,6 +3,7 @@ process_manager_sources = [
   'process-manager-application.c',
   'process-manager-window.c',
   'view/process-view.c',
+  'layout/process-layout.c',
   'core/process-item.c',
   'core/process-model.c',
   'core/process-raw.c',
@@ -10,11 +11,14 @@ process_manager_sources = [
   'components/table-cell.c',
   'util/disk-usage-type.c',
   'util/cpu-usage-type.c',
+  'util/alert-dialog.c',
   'components/table-cell.c',
   'components/process-details.c',
+  'components/run-window.c',
   'components/expander-cell.c',
   'components/search-bar.c',
-  'components/numeric-cell.c'
+  'components/numeric-cell.c',
+  'components/icon-button.c'
 ]
 
 process_manager_deps = [

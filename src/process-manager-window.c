@@ -23,7 +23,7 @@
 #include "gtk/gtk.h"
 #include "gtk/gtkshortcut.h"
 #include "components/search-bar.h"
-#include "view/process-view.h"
+#include "layout/process-layout.h"
 
 #include "process-manager-window.h"
 
@@ -31,7 +31,6 @@ struct _ProcessManagerWindow {
   GtkApplicationWindow parent_instance;
 
   /* Template widgets */
-  GtkWidget *scrolled_window;
   PmSearchBar *search_bar;
 };
 
@@ -82,16 +81,13 @@ process_manager_window_class_init(ProcessManagerWindowClass *klass) {
       widget_class,
       "/com/github/kenayake/ProcessManager/process-manager-window.ui");
   gtk_widget_class_bind_template_child(widget_class, ProcessManagerWindow,
-                                       scrolled_window);
-  gtk_widget_class_bind_template_child(widget_class, ProcessManagerWindow,
                                        search_bar);
 }
 
 static void process_manager_window_init(ProcessManagerWindow *self) {
-  PmProcessView *process_view;
   GtkCssProvider *provider;
-  GtkWidget *cl;
   GtkFilter *filter;
+  PmProcessLayout *layout;
 
   gtk_widget_init_template(GTK_WIDGET(self));
 
@@ -107,10 +103,6 @@ static void process_manager_window_init(ProcessManagerWindow *self) {
 
   filter = pm_search_bar_get_filter(self->search_bar);
 
-  process_view = process_view_new(filter);
-
-  cl = process_view_get_view(process_view);
-
-  gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(self->scrolled_window),
-                                cl);
+  layout = pm_process_layout_new(filter);
+  gtk_window_set_child(GTK_WINDOW(self), GTK_WIDGET(layout));
 }

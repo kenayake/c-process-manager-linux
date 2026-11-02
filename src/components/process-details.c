@@ -55,7 +55,7 @@ static void pm_process_details_get_property(GObject *object, guint property_id,
 }
 
 static gchararray title_factory(PmProcessDetails *self, gchararray name) {
-  return g_strdup_printf("Viewing %s Details", name);
+  return g_strdup_printf("Viewing %s details", name);
 }
 
 static void button_click(GtkButton *self, PmProcessDetails *details) {

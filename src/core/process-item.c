@@ -254,8 +254,8 @@ PmProcessItem *process_item_new(pid_t pid, gboolean has_children) {
 
   PmProcessItem *process_item = g_object_new(PM_TYPE_PROCESS_ITEM, "pid", pid, NULL);
 
+  process_item->children = g_list_store_new(PM_TYPE_PROCESS_ITEM);
   if (has_children) {
-    process_item->children = g_list_store_new(PM_TYPE_PROCESS_ITEM);
     process_item->has_children = TRUE;
   } else {
     process_item->has_children = FALSE;
@@ -297,9 +297,7 @@ PmProcessItem *process_item_new_from_raw(ProcessRaw *raw) {
     "pgid", raw->pgrp, "user", user, NULL);
 
   process_item->has_children = raw->has_children;
-  if (process_item->has_children) {
-    process_item->children = g_list_store_new(PM_TYPE_PROCESS_ITEM);
-  }
+  process_item->children = g_list_store_new(PM_TYPE_PROCESS_ITEM);
 
   return process_item;
 }
@@ -307,11 +305,7 @@ PmProcessItem *process_item_new_from_raw(ProcessRaw *raw) {
 GListModel *process_item_get_children(gpointer item, gpointer user_data) {
   PmProcessItem *process_item = PM_PROCESS_ITEM(item);
 
-  if (process_item->has_children) {
-    return G_LIST_MODEL(g_object_ref(process_item->children));
-  }
-
-  return NULL;
+  return G_LIST_MODEL(g_object_ref(process_item->children));
 }
 
 void process_item_append_child(PmProcessItem *item, PmProcessItem *child) {
@@ -349,6 +343,10 @@ void process_item_update_from_raw(PmProcessItem *item, ProcessRaw *raw, guint64 
   // update member structs
   item->cpu_usage = raw->cpu_usage;
   item->disk_usage = raw->disk_usage;
+
+  // if (g_strcmp0(item->name, "disk_write_test") == 0) {
+  //   g_info("%s", item->name);
+  // }
 }
 
 static gboolean find_process(gconstpointer a, gconstpointer b,
@@ -383,12 +381,9 @@ void process_item_sync_children_with_raw(gpointer key, gpointer value,
                                          gpointer user_data) {
   ProcessRaw *child_raw = (ProcessRaw *)value;
   GListStore *store = G_LIST_STORE(user_data);
-  guint64 *cpu_usage_time = g_object_get_data(G_OBJECT(store), "cpu-delta");
   g_autoptr(PmProcessItem) item = NULL;
 
-  if (process_item_model_contains(G_LIST_MODEL(store), child_raw->pid, &item)) {
-    process_item_update_from_raw(item, child_raw, cpu_usage_time);
-  } else {
+  if (!process_item_model_contains(G_LIST_MODEL(store), child_raw->pid, &item)) {
     item = process_item_new_from_raw(child_raw);
     g_list_store_append(store, item);
   }
@@ -403,15 +398,15 @@ void process_item_set_single(PmProcessItem *item) {
     GListStore *children = item->children;
 
     g_list_store_remove_all(children);
-    g_object_unref(children);
-    item->children = NULL;
+    // g_object_unref(children);
+    // item->children = NULL;
     item->has_children = FALSE;
   }
 }
 
 void process_item_set_parent(PmProcessItem *item) {
   if (!item->has_children) {
-    item->children = g_list_store_new(PM_TYPE_PROCESS_ITEM);
+    // item->children = g_list_store_new(PM_TYPE_PROCESS_ITEM);
     item->has_children = TRUE;
   }
 }
@@ -432,6 +427,34 @@ void process_item_print_model(GListModel *list, const gchar *prefix) {
 
     if (process->has_children) {
       process_item_print_model(G_LIST_MODEL(process->children), "   ");
+    }
+  }
+}
+
+void process_item_print_item(PmProcessItem *process) {
+  g_info("PID: %d | Name: %s | status: %s | Mem: %0.3f | CPU: %0.3f | "
+         "Disk: %0.3f | Children: %u",
+         process->pid, process->name ? process->name : "(unknown)",
+         process->status, process->memory, process->cpu, process->disk,
+         process->has_children
+             ? g_list_model_get_n_items(G_LIST_MODEL(process->children))
+             : 0);
+
+  if (process->has_children) {
+    guint size = g_list_model_get_n_items(G_LIST_MODEL(process->children));
+
+    for (int i = 0; i < size; i++) {
+      g_autoptr(PmProcessItem) child = PM_PROCESS_ITEM(
+          g_list_model_get_item(G_LIST_MODEL(process->children), i));
+
+      g_info(
+          "      PID: %d | Name: %s | status: %s | Mem: %0.3f | CPU: %0.3f | "
+          "Disk: %0.3f | Children: %u",
+          child->pid, child->name ? child->name : "(unknown)", child->status,
+          child->memory, child->cpu, child->disk,
+          child->has_children
+              ? g_list_model_get_n_items(G_LIST_MODEL(child->children))
+              : 0);
     }
   }
 }

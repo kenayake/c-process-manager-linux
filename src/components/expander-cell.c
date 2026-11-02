@@ -1,6 +1,7 @@
 #include "components/expander-cell.h"
 #include "glib-object.h"
 #include "glib.h"
+#include "glibconfig.h"
 #include "gtk/gtk.h"
 #include "gtk/gtkshortcut.h"
 
@@ -8,6 +9,7 @@ struct _PmExpanderCell {
   GtkBox parent_instance;
   gchar *label;
   GtkTreeExpander *expander;
+  gboolean hide_expander;
   // GtkWidget *label_widget;
   // GBinding *label_binding;
 };
@@ -15,6 +17,7 @@ struct _PmExpanderCell {
 enum {
   PROP_0,
   PROP_LABEL,
+  PROP_HIDE_EXPANDER,
   N_PROPERTIES
 };
 
@@ -33,6 +36,10 @@ static void pm_expander_cell_set_property(GObject *object, guint property_id,
     self->label = g_value_dup_string(value);
     break;
 
+  case PROP_HIDE_EXPANDER:
+    self->hide_expander = g_value_get_boolean(value);
+    break;
+
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
     break;
@@ -46,6 +53,10 @@ static void pm_expander_cell_get_property(GObject *object, guint property_id,
   switch (property_id) {
   case PROP_LABEL:
     g_value_set_string(value, self->label);
+    break;
+
+  case PROP_HIDE_EXPANDER:
+    g_value_set_boolean(value, self->hide_expander);
     break;
 
   default:
@@ -77,6 +88,9 @@ static void pm_expander_cell_class_init(PmExpanderCellClass *klass) {
   properties[PROP_LABEL] =
       g_param_spec_string("label", "Label", "The expander cell label", NULL,
                           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+  properties[PROP_HIDE_EXPANDER] =
+      g_param_spec_boolean("hide-expander", "Hide Expander", "hide expander boolean", false,
+                          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
   
   g_object_class_install_properties(object_class, N_PROPERTIES, properties);
 
@@ -89,9 +103,7 @@ static void pm_expander_cell_class_init(PmExpanderCellClass *klass) {
 
 static void pm_expander_cell_init(PmExpanderCell *self) {
   self->label = NULL;
-  // self->label_widget = gtk_label_new(NULL);
-
-  // self->label_binding = g_object_bind_property(self, "label", self->label_widget, "label", G_BINDING_DEFAULT);
+  self->hide_expander = FALSE;
 
   gtk_widget_init_template(GTK_WIDGET(self));
   gtk_widget_add_css_class (GTK_WIDGET(self), "expander-cell");
@@ -99,7 +111,6 @@ static void pm_expander_cell_init(PmExpanderCell *self) {
 
 GtkWidget *pm_expander_cell_new(const gchar *label) {
   PmExpanderCell *self = g_object_new(PM_TYPE_EXPANDER_CELL, "label", label, NULL);
-  // gtk_tree_expander_set_child(self->expander, self->label_widget);
 
   return GTK_WIDGET(self);
 }

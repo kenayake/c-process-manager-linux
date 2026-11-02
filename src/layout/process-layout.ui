@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="PmProcessLayout" parent="GtkBox">
+    <property name="orientation">vertical</property>
+    <property name="vexpand">true</property>
+    <property name="hexpand">true</property>
+    <property name="css-classes">process-layout</property>
+    <child>
+      <object class="GtkBox">
+        <property name="orientation">horizontal</property>
+        <property name="css-classes">process-header</property>
+        <child>
+          <object class="GtkLabel">
+            <property name="label">Processes</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkBox">
+            <property name="hexpand">true</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkBox">
+            <property name="spacing">8</property>
+            <child>
+              <object class="PmIconButton" id="add_process_button">
+                <property name="icon-name">tab-new-symbolic</property>
+                <property name="text">Run new task</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkSeparator">
+                <property name="orientation">vertical</property>
+              </object>
+            </child>
+            <child>
+              <object class="PmIconButton" id="end_process_button">
+                <property name="icon-name">process-stop</property>
+                <property name="text">End task</property>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="GtkScrolledWindow" id="scrolled_window">
+        <property name="vexpand">true</property>
+        <property name="hexpand">true</property>
+      </object>
+    </child>
+  </template>
+</interface>

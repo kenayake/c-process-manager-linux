@@ -1,6 +1,4 @@
 #include "components/process-details.h"
-#include "components/search-bar.h"
-#include "config.h"
 #include "process-view.h"
 #include "components/expander-cell.h"
 #include "components/numeric-cell.h"
@@ -8,17 +6,14 @@
 #include "core/process-item.h"
 #include "core/process-model.h"
 #include "core/system-status.h"
+#include "util/alert-dialog.h"
 #include "gdk/gdk.h"
 #include "gio/gio.h"
 #include "glib-object.h"
 #include "glib.h"
 #include "glibconfig.h"
 #include "graphene.h"
-#include "gtk/gtkshortcut.h"
-#include "gtk/gtksingleselection.h"
-#include "process-manager-window.h"
 #include <gtk/gtk.h>
-#include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <sys/types.h>
@@ -48,18 +43,28 @@ struct _PmProcessView {
   GtkFilterListModel *filter_model;
 };
 
+enum {
+  PROP_0,
+  PROP_SELECTION,
+  N_PROPERTIES
+};
+
+static GParamSpec *properties[N_PROPERTIES];
+
 G_DEFINE_FINAL_TYPE(PmProcessView, pm_process_view, G_TYPE_OBJECT)
 
-static void show_alert(PmProcessView *self, const gchar *title, GError *error) {
-  g_autoptr(GtkAlertDialog) alert;
+static void pm_process_view_get_property(GObject *object, guint property_id,
+                                         GValue *value, GParamSpec *pspec) {
+  PmProcessView *self = PM_PROCESS_VIEW(object);
 
-  GtkRoot *root = gtk_widget_get_root (GTK_WIDGET(self->column_view));
-  GtkWindow *parent_window = GTK_WINDOW (root);
-
-  alert = gtk_alert_dialog_new("%s", title);
-  gtk_alert_dialog_set_detail(alert, error->message);
-  gtk_alert_dialog_set_modal(alert, TRUE);
-  gtk_alert_dialog_show(alert, parent_window);
+  switch (property_id) {
+  case PROP_SELECTION:
+    g_value_set_object(value, self->selection);
+    break;
+  default:
+    G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
+    break;
+  }
 }
 
 static void kill_process(GSimpleAction *action, GVariant *parameter, gpointer user_data) {
@@ -69,7 +74,8 @@ static void kill_process(GSimpleAction *action, GVariant *parameter, gpointer us
   PmProcessItem *selectedProcess = gtk_tree_list_row_get_item(activeTreeRow);
 
   if (!process_item_kill_process(selectedProcess, &error)) {
-    show_alert(self, "Kill Process Failed", error);
+    GtkRoot *root = gtk_widget_get_root (GTK_WIDGET(self->column_view));
+    show_alert(GTK_WINDOW (root), "Kill Process Failed", error);
   }
 }
 
@@ -87,6 +93,9 @@ static void open_properties(GSimpleAction *action, GVariant *parameter, gpointer
 
   details = process_details_new(pid, name, parent_window);
   process_details_show(details);
+
+  // testing
+  process_item_print_item(selectedProcess);
 }
 
 static void open_dir(GSimpleAction *action, GVariant *parameter, gpointer user_data) {
@@ -97,7 +106,8 @@ static void open_dir(GSimpleAction *action, GVariant *parameter, gpointer user_d
   
   // const gchar *type_name = g_type_name(G_OBJECT_TYPE(child2));
   if (!process_item_open_folder(selectedProcess, &error)) {
-    show_alert(self, "Open Directory Failed", error);
+    GtkRoot *root = gtk_widget_get_root (GTK_WIDGET(self->column_view));
+    show_alert(GTK_WINDOW (root), "Open Directory Failed", error);
   }
 }
 
@@ -199,6 +209,24 @@ static void setup_expander_column(GtkSignalListItemFactory *factory,
   gtk_widget_add_controller(expander, GTK_EVENT_CONTROLLER(click));
 }
 
+static gboolean
+hide_expander (GBinding     *binding,
+              const GValue *from_value,
+              GValue       *to_value,
+              gpointer      user_data)
+{
+  PmProcessItem *item = g_value_get_object (from_value);
+
+  // If the row returns no child model, or if the model contains 0 items, hide the expander arrow.
+  if (process_item_has_children(item)) {
+      g_value_set_boolean (to_value, FALSE);
+  } else {
+      g_value_set_boolean (to_value, TRUE);
+  }
+
+  return TRUE;
+}
+
 static void bind_expander_column(GtkSignalListItemFactory *factory,
                                  GtkListItem *list_item, gpointer user_data) {
   GtkTreeListRow *row;
@@ -207,6 +235,7 @@ static void bind_expander_column(GtkSignalListItemFactory *factory,
   GtkWidget *label;
   g_autofree gchar *key;
   GBinding *binding;
+  GBinding *expander_binding;
 
   UserData *data = user_data;
 
@@ -219,6 +248,15 @@ static void bind_expander_column(GtkSignalListItemFactory *factory,
 
   binding = g_object_bind_property(process, data->name, expander, "label",
                                    G_BINDING_SYNC_CREATE);
+  
+  expander_binding = g_object_bind_property_full (
+        G_OBJECT (row), "item",
+        G_OBJECT (expander), "hide-expander",
+        G_BINDING_SYNC_CREATE,
+        hide_expander,
+        NULL, NULL, NULL
+    );
+
 
   key = g_strdup_printf("%s-key", data->name);
 
@@ -516,6 +554,15 @@ void on_view_unmap(GtkWidget *self, gpointer user_data) {
 
 static void pm_process_view_class_init(PmProcessViewClass *klass) {
   GObjectClass *object_class = G_OBJECT_CLASS(klass);
+
+  object_class->get_property = pm_process_view_get_property;
+
+  properties[PROP_SELECTION] =
+      g_param_spec_object("selection", "Selection",
+                          "The process view selection model",
+                          GTK_TYPE_SINGLE_SELECTION,
+                          G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+  g_object_class_install_properties(object_class, N_PROPERTIES, properties);
 }
 
 void pm_process_view_init(PmProcessView *self) {

@@ -84,6 +84,7 @@ static gchararray numeric_label_binding_closure(GtkWidget *self) {
     gtk_widget_remove_css_class(self, class);
   }
 
+  // Completely arbitrary
   if (obj->raw_value / obj->max < 0.01) {
     gtk_widget_add_css_class(self, "accent1");
   } else if (obj->raw_value / obj->max < 0.1) {

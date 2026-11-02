@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <requires lib="gtk" version="4.0" />
+  <template class="PmRunWindow" parent="GtkWindow">
+    <property name="modal">true</property>
+    <property name="title">Create new process</property>
+    <child>
+      <object class="GtkBox">
+        <property name="orientation">vertical</property>
+        <child>
+          <object class="GtkGrid">
+            <property name="column-spacing">32</property>
+            <property name="row-spacing">24</property>
+            <property name="margin-start">16</property>
+            <property name="margin-end">16</property>
+            <property name="margin-top">24</property>
+            <property name="margin-bottom">24</property>
+            <!-- Description -->
+            <child>
+              <object class="GtkImage">
+                <property name="resource">/com/github/kenayake/ProcessManager/images/logo_large.png</property>
+                <property name="pixel-size">48</property>
+                <layout>
+                  <property name="column">0</property>
+                  <property name="row">0</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="GtkLabel">
+                <property name="label">Type the name of a program, folder, document, or Internet resource.</property>
+                <property name="max-width-chars">40</property>
+                <property name="wrap">true</property>
+                <layout>
+                  <property name="column">1</property>
+                  <property name="row">0</property>
+                  <property name="col-span">5</property>
+                </layout>
+              </object>
+            </child>
+            <!-- Entry -->
+            <child>
+              <object class="GtkLabel">
+                <property name="label">Open: </property>
+                <layout>
+                  <property name="column">0</property>
+                  <property name="row">1</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="GtkEntry" id="entry">
+                <layout>
+                  <property name="column">1</property>
+                  <property name="row">1</property>
+                  <property name="col-span">5</property>
+                </layout>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkBox">
+            <property name="hexpand">true</property>
+            <property name="spacing">12</property>
+            <child>
+              <object class="GtkBox">
+                <property name="hexpand">true</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkButton" id="ok_button">
+                <property name="label">OK</property>
+                <signal name="clicked" handler="ok_button_clicked" />
+              </object>
+            </child>
+            <child>
+              <object class="GtkButton" id="cancel_button">
+                <property name="label">Cancel</property>
+                <signal name="clicked" handler="cancel_button_clicked" />
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </template>
+</interface>

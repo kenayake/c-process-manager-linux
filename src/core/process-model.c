@@ -34,7 +34,7 @@ static gboolean first_pass(GHashTable *exList, GError **error) {
       // create raw process data container
       if ((process_raw = process_raw_scan(*pid, error)) == NULL) {
         g_dir_close(dir);
-        return FALSE;
+        continue;
       }
 
       if (g_strcmp0(process_raw->comm, "init-systemd(Ub") == 0) {
@@ -195,6 +195,8 @@ static void third_pass(gpointer key, gpointer value, gpointer user_data) {
     } else if (raw->has_children) {
       // raw item has new children
       process_item_set_parent(item);
+      g_autoptr(GListModel) item_children = process_item_get_children(item, NULL);
+      g_hash_table_foreach(raw->children, process_item_sync_children_with_raw, item_children);
     } else if (process_item_has_children(item)) {
       // raw group leader no longer has any children
       process_item_set_single(item);
