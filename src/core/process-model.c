@@ -33,7 +33,6 @@ static gboolean first_pass(GHashTable *exList, GError **error) {
 
       // create raw process data container
       if ((process_raw = process_raw_scan(*pid, error)) == NULL) {
-        g_dir_close(dir);
         continue;
       }
 
