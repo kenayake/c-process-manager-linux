@@ -11,7 +11,9 @@
     <file preprocess="xml-stripblanks">components/process-details.ui</file>
     <file preprocess="xml-stripblanks">components/run-window.ui</file>
     <file preprocess="xml-stripblanks">components/icon-button.ui</file>
+    <file preprocess="xml-stripblanks">components/stack-sidebar.ui</file>
     <file preprocess="xml-stripblanks">layout/process-layout.ui</file>
+    <file preprocess="xml-stripblanks">layout/app-layout.ui</file>
     <file preprocess="xml-stripblanks">view/process-view.ui</file>
 
     <!-- Images -->

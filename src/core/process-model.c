@@ -33,6 +33,9 @@ static gboolean first_pass(GHashTable *exList, GError **error) {
 
       // create raw process data container
       if ((process_raw = process_raw_scan(*pid, error)) == NULL) {
+        g_warning("Error Scanning Process %" G_GINT64_FORMAT ": %s", *pid,
+                  *error ? (*error)->message : "unknown error");
+        g_clear_error(error);
         continue;
       }
 

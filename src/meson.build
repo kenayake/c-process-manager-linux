@@ -3,6 +3,7 @@ process_manager_sources = [
   'process-manager-application.c',
   'process-manager-window.c',
   'view/process-view.c',
+  'layout/app-layout.c',
   'layout/process-layout.c',
   'core/process-item.c',
   'core/process-model.c',
@@ -18,11 +19,12 @@ process_manager_sources = [
   'components/expander-cell.c',
   'components/search-bar.c',
   'components/numeric-cell.c',
-  'components/icon-button.c'
+  'components/icon-button.c',
+  'components/stack-sidebar.c',
 ]
 
 process_manager_deps = [
-  dependency('gtk4', version: '>= 4.10'),
+  dependency('gtk4', version: '>= 4.20'),
 ]
 
 process_manager_sources += gnome.compile_resources('process-manager-resources',

@@ -1,5 +1,7 @@
 #include <gtk/gtk.h>
 #include "components/icon-button.h"
+#include "glib-object.h"
+#include "glib.h"
 
 struct _PmIconButton {
   GtkButton parent_instance;
@@ -9,6 +11,7 @@ struct _PmIconButton {
   gchar *icon_name;
   gchar *text_value;
   gboolean show_text;
+  gint icon_size;
 };
 
 enum {
@@ -16,6 +19,7 @@ enum {
   PROP_ICON_NAME,
   PROP_TEXT,
   PROP_SHOW_TEXT,
+  PROP_ICON_SIZE,
   N_PROPERTIES
 };
 
@@ -34,6 +38,9 @@ static void pm_icon_button_set_property(GObject *object, guint property_id,
   PmIconButton *self = PM_ICON_BUTTON(object);
 
   switch (property_id) {
+  case PROP_ICON_SIZE:
+    self->icon_size = g_value_get_int(value);
+    break;
   case PROP_ICON_NAME:
     g_free(self->icon_name);
     self->icon_name = g_value_dup_string(value);
@@ -64,6 +71,9 @@ static void pm_icon_button_get_property(GObject *object, guint property_id,
   PmIconButton *self = PM_ICON_BUTTON(object);
 
   switch (property_id) {
+  case PROP_ICON_SIZE:
+    g_value_set_int(value, self->icon_size);
+    break;
   case PROP_ICON_NAME:
     g_value_set_string(value, self->icon_name);
     break;
@@ -96,6 +106,7 @@ static void pm_icon_button_class_init(PmIconButtonClass *klass) {
   object_class->get_property = pm_icon_button_get_property;
   object_class->finalize = pm_icon_button_finalize;
 
+  properties[PROP_ICON_SIZE] = g_param_spec_int("icon-size", "Icon Size", "Size of the icon", 0, G_MAXINT, 0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
   properties[PROP_ICON_NAME] =
       g_param_spec_string("icon-name", "Icon name", "The button icon name",
                           NULL, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
@@ -117,7 +128,10 @@ static void pm_icon_button_class_init(PmIconButtonClass *klass) {
 
 static void pm_icon_button_init(PmIconButton *self) {
   self->show_text = TRUE;
+  self->icon_size = 16;
+
   gtk_widget_init_template(GTK_WIDGET(self));
+  g_object_bind_property(self, "icon-size", self->icon, "pixel-size", G_BINDING_BIDIRECTIONAL);
   pm_icon_button_update_text_visibility(self);
 }
 

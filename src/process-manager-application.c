@@ -21,7 +21,11 @@
 #include "config.h"
 #include <glib/gi18n.h>
 
+#include "gio/gio.h"
+#include "glib-object.h"
 #include "glib.h"
+#include "gtk/gtk.h"
+#include "gtk/gtkshortcut.h"
 #include "process-manager-application.h"
 #include "process-manager-window.h"
 
@@ -44,8 +48,24 @@ process_manager_application_new(const char *application_id,
 
 static void process_manager_application_activate(GApplication *app) {
   GtkWindow *window;
+  GtkSettings *settings;
+  GtkCssProvider *provider;
 
   g_assert(PROCESS_MANAGER_IS_APPLICATION(app));
+
+  settings = gtk_settings_get_default();
+  // g_object_set(settings, "gtk-interface-color-scheme", GTK_INTERFACE_COLOR_SCHEME_LIGHT, NULL);
+
+  provider = gtk_css_provider_new();
+  gtk_css_provider_load_from_path(provider, "src/global.css");
+
+  g_object_bind_property(settings, "gtk-interface-color-scheme", provider, "prefers-color-scheme", G_BINDING_SYNC_CREATE | G_BINDING_BIDIRECTIONAL);
+
+  gtk_style_context_add_provider_for_display(
+      gdk_display_get_default(), GTK_STYLE_PROVIDER(provider),
+      GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+  g_object_unref(provider);
+  g_object_unref(settings);
 
   window = gtk_application_get_active_window(GTK_APPLICATION(app));
 

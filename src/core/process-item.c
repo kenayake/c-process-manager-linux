@@ -338,7 +338,7 @@ void process_item_update_from_raw(PmProcessItem *item, ProcessRaw *raw, guint64 
 
   g_object_set(item, "pgid", raw->pgrp, "name", raw->comm, "status", raw->state, "priority",
               (raw->priority + raw->nice) < 0 ? "Real-Time" : "Normal", "user",
-              user_entry->pw_name, "memory", mem, "cpu", cpu, "disk", disk, NULL);
+              user_entry->pw_name, "memory", mem, "cpu", cpu < 0 ? 0 : cpu, "disk", disk < 0 ? 0 : disk, NULL);
 
   // update member structs
   item->cpu_usage = raw->cpu_usage;

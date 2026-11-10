@@ -128,7 +128,6 @@ static void pm_numeric_cell_init(PmNumericCell *self) {
   self->raw_value = 0.0;
   self->suffix = NULL;
   g_object_bind_property(self, "raw_value", self, "label", G_BINDING_SYNC_CREATE);
-  gtk_widget_init_template(GTK_WIDGET(self));
 }
 
 GtkWidget *pm_numeric_cell_new(gdouble raw_value, gdouble max, const gchar *suffix) {

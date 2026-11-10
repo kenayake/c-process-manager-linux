@@ -1,44 +1,104 @@
-columnview cell {
-  padding: 0;
+:root {
+  --text-color: #000000;
+  --bg-color: #ffffff;
+  --surface-color: #f3f3f3;
+  --selection-color: #eeeeee;
+  --border-color: #d2d2d2;
+  --accent1: rgba(199, 224, 244, 0.7);
+  --accent2: rgba(140, 205, 255, 0.7);
+  --accent3: rgba(91, 173, 255, 0.7);
+  --accent4: rgba(0, 120, 212, 0.7);
+  --sidebar-toggle-selected-color: rgba(0, 0, 0, 0.06);
 }
 
-columnview row:selected {
-  background-color: #eeeeee; /* Your custom color */
-  border-top: 1px solid #393939;
-  border-bottom: 1px solid #393939;
-  color: black;
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text-color: #ffffff;
+    --bg-color: #1c1c1c;
+    --surface-color: #282828;
+    --selection-color: rgba(238, 238, 238, 0.05);
+    --border-color: #333333;
+    --accent1: rgba(0, 48, 84, 0.7);
+    --accent2: rgba(0, 68, 120, 0.7);
+    --accent3: rgba(0, 90, 158, 0.7);
+    --accent4: rgba(0, 120, 212, 0.7);
+    --sidebar-toggle-selected-color: rgba(168, 168, 168, 0.08);
+  }
+
+  columnview row:selected .accent1 {
+    background-color: mix(var(--selection-color), var(--accent1), 1.1);
+  }
 }
 
-columnview.column-separators listview row cell:not(:first-child) {
-    border-left: 2px solid rgb(210, 210, 210);
+tooltip {
+  background-color: var(--bg-color);
+  color: var(--text-color);
 }
 
-columnview header button {
-  padding-top: 40px;
-  border-left: 2px solid rgb(210, 210, 210);
-}
-
-treeexpander indent{
-  -gtk-icon-size: 16px;
-}
-
+/* Outside Content Area */
 headerbar, .titlebar {
   padding: 8px;
   padding-left: 16px;
-  background-color: #f3f3f3;
-  background-image: none;  
-  /* color: #FFFFFF;  */
+  background-color: var(--surface-color);
+  background-image: none;
+  border-bottom: 0px;
+  color: var(--text-color);
+}
+
+.stack-sidebar {
+  background-color: var(--surface-color);
+  padding: 8px;
+  font-size: larger;
+}
+
+.stack-sidebar button {
+  padding: 8px;
+  color: var(--text-color);
+}
+
+.stack-sidebar .show-text-toggle {
+  background-color: var(--surface-color);
+  background-image: none;
+  box-shadow: none;
+  border: 0px;
+} 
+
+.stack-sidebar .show-text-toggle:hover {
+  background-color: var(--sidebar-toggle-selected-color);
+} 
+
+.stack-sidebar .page-toggle:checked,.page-toggle:hover {
+  background-color: var(--sidebar-toggle-selected-color);
+  background-image: none;
+  box-shadow: none;
+}
+
+.stack-sidebar button label {
+  padding-right: 48px;
+  padding-left: 8px;
+}
+
+.background {
+  background-color: var(--surface-color);
 }
 
 entry.search {
   padding: 4px;
   padding-left: 12px;
   font-size: large;
+  background-color: var(--selection-color);
+  color: var(--text-color);
+  border-color: var(--border-color);
+}
+
+/* Content Area */
+stack {
+  background-color: var(--surface-color);
 }
 
 .process-header {
   padding: 16px;
-  border-bottom: 2px solid rgb(210, 210, 210);
+  border-bottom: 2px solid var(--border-color);
 }
 
 .process-header>label {
@@ -47,27 +107,72 @@ entry.search {
 }
 
 .process-layout {
-  background-color: white;
+  border-top: 2px solid color-mix(in srgb, var(--surface-color) 50%, var(--border-color) 50%);
+  border-left: 2px solid color-mix(in srgb, var(--surface-color) 50%, var(--border-color) 50%);
+  border-top-left-radius: 20px;
+  background-color: var(--bg-color);
+}
+
+.process-layout label,image {
+  color: var(--text-color);
+}
+
+columnview cell {
+  padding: 0;
+}
+
+columnview row:selected {
+  background-color: var(--selection-color);
+  border-top: 1px solid var(--text-color);
+  border-bottom: 1px solid var(--text-color);
+  color: var(--text-color);
+}
+
+columnview.column-separators listview row cell:not(:first-child) {
+  border-left: 2px solid var(--border-color);
+}
+
+columnview header button {
+  padding-top: 40px;
+  border-left-width: 0px;
+  background-color: var(--bg-color);
+  border-bottom: 2px solid var(--border-color);
+}
+
+columnview header button:not(:first-child) {
+  border-left: 2px solid var(--border-color);
+}
+
+columnview header button:first-child {
+  padding-left: 32px;
+}
+
+columnview listview {
+  background-color: var(--bg-color);
+}
+
+treeexpander indent,expander{
+  -gtk-icon-size: 16px;
+  color: var(--text-color);
 }
 
 /* For process metric colors */
 .accent1 {
-  background-color: #c7e0f4;
+  background-color: var(--accent1);
+}
+
+columnview row:selected .accent1 {
+  background-color: mix(var(--selection-color), var(--accent1), 0.9);
 }
 
 .accent2 {
-  background-color: #8ccdff;
+  background-color: var(--accent2);
 }
 
 .accent3 {
-  background-color: #5badff;
+  background-color: var(--accent3);
 }
 
 .accent4 {
-  background-color: #0078d4;
+  background-color: var(--accent4);
 }
-
-/* .table-cell {
-  border: 5px solid green;
-} */
-

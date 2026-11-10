@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="PmStackSidebar" parent="GtkBox">
+    <property name="orientation">vertical</property>
+    <property name="spacing">6</property>
+    <property name="css-classes">stack-sidebar</property>
+    <child>
+      <object class="GtkToggleButton" id="show_text_toggle">
+        <property name="has-frame">false</property>
+        <property name="halign">start</property>
+        <property name="css-classes">show-text-toggle</property>
+        <property name="child">
+          <object class="GtkImage">
+            <property name="icon-name">open-menu-symbolic</property>
+            <binding name="pixel-size">
+              <lookup name="icon-size" type="PmStackSidebar"></lookup>
+            </binding>
+          </object>
+        </property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkBox" id="top_items">
+        <property name="margin-top">8</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">8</property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkBox">
+        <property name="vexpand">true</property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkBox" id="bottom_items">
+        <property name="orientation">vertical</property>
+        <property name="spacing">4</property>
+      </object>
+    </child>
+  </template>
+</interface>

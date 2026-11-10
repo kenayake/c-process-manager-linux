@@ -23,6 +23,7 @@
 #include "gtk/gtk.h"
 #include "gtk/gtkshortcut.h"
 #include "components/search-bar.h"
+#include "layout/app-layout.h"
 #include "layout/process-layout.h"
 
 #include "process-manager-window.h"
@@ -85,24 +86,14 @@ process_manager_window_class_init(ProcessManagerWindowClass *klass) {
 }
 
 static void process_manager_window_init(ProcessManagerWindow *self) {
-  GtkCssProvider *provider;
   GtkFilter *filter;
-  PmProcessLayout *layout;
+  // PmProcessLayout *layout;
+  PmAppLayout *app_layout;
 
   gtk_widget_init_template(GTK_WIDGET(self));
 
-  provider = gtk_css_provider_new();
-  gtk_css_provider_load_from_path(provider, "src/global.css");     
-
-  gtk_style_context_add_provider_for_display(
-    gdk_display_get_default(),
-    GTK_STYLE_PROVIDER(provider),
-    GTK_STYLE_PROVIDER_PRIORITY_APPLICATION
-  );
-  g_object_unref (provider);
-
   filter = pm_search_bar_get_filter(self->search_bar);
 
-  layout = pm_process_layout_new(filter);
-  gtk_window_set_child(GTK_WINDOW(self), GTK_WIDGET(layout));
+  app_layout = pm_app_layout_new(filter);
+  gtk_window_set_child(GTK_WINDOW(self), GTK_WIDGET(app_layout));
 }
