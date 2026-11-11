@@ -540,7 +540,7 @@ gboolean process_item_match_func(gpointer item, gpointer user_data) {
 
   pid = g_strdup_printf("%jd", (intmax_t)self->pid);
 
-  if (g_str_match_string(search, pid, TRUE) || g_str_match_string(search, self->name, TRUE)) {
+  if (g_str_match_string(search, pid, TRUE) || g_str_match_string(search, self->name, TRUE) || g_str_match_string(search, self->user, TRUE)) {
     return TRUE;
   } else {
     // check if children matches search
