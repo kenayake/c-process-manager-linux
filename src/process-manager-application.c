@@ -50,16 +50,18 @@ static void process_manager_application_activate(GApplication *app) {
   GtkWindow *window;
   GtkSettings *settings;
   GtkCssProvider *provider;
+  GtkInterfaceColorScheme scheme;
 
   g_assert(PROCESS_MANAGER_IS_APPLICATION(app));
 
   settings = gtk_settings_get_default();
-  // g_object_set(settings, "gtk-interface-color-scheme", GTK_INTERFACE_COLOR_SCHEME_LIGHT, NULL);
+  g_object_get(settings, "gtk-interface-color-scheme", &scheme, NULL);
+  g_object_set(settings, "gtk-interface-color-scheme", scheme, NULL);
 
   provider = gtk_css_provider_new();
   gtk_css_provider_load_from_path(provider, "src/global.css");
 
-  g_object_bind_property(settings, "gtk-interface-color-scheme", provider, "prefers-color-scheme", G_BINDING_SYNC_CREATE | G_BINDING_BIDIRECTIONAL);
+  g_object_bind_property(settings, "gtk-interface-color-scheme", provider, "prefers-color-scheme", G_BINDING_SYNC_CREATE);
 
   gtk_style_context_add_provider_for_display(
       gdk_display_get_default(), GTK_STYLE_PROVIDER(provider),

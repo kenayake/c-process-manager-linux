@@ -1,14 +1,15 @@
 #include "layout/app-layout.h"
 #include "components/stack-sidebar.h"
+#include "glib-object.h"
 #include "gtk/gtk.h"
 #include "layout/process-layout.h"
+#include "view/settings-view.h"
 
 struct _PmAppLayout {
   GtkBox parent_instance;
 
   PmStackSidebar *sidebar;
   GtkStack *stack;
-  GtkFilter *filter;
 };
 
 G_DEFINE_FINAL_TYPE(PmAppLayout, pm_app_layout, GTK_TYPE_BOX)
@@ -32,16 +33,22 @@ static void pm_app_layout_init(PmAppLayout *self) {
 
 PmAppLayout *pm_app_layout_new(GtkFilter *filter) {
   PmProcessLayout *layout;
+  PmSettingsView *settings;
+  GtkStackPage *stackpage;
+
   PmAppLayout *obj =  g_object_new(PM_TYPE_APP_LAYOUT, NULL);
-  obj->filter = filter;
 
   // Processes page
   layout = pm_process_layout_new(filter);
   gtk_stack_add_titled(obj->stack, GTK_WIDGET(layout), "processes", "Processes");
-  GtkStackPage *stackpage = gtk_stack_get_page(obj->stack, GTK_WIDGET(layout));
+  stackpage = gtk_stack_get_page(obj->stack, GTK_WIDGET(layout));
   gtk_stack_page_set_icon_name(stackpage, "view-grid-symbolic");
 
   // Settings Page (TODO)
+  settings = pm_settings_view_new();
+  gtk_stack_add_titled(obj->stack, GTK_WIDGET(settings), "settings", "Settings");
+  stackpage = gtk_stack_get_page(obj->stack, GTK_WIDGET(settings));
+  gtk_stack_page_set_icon_name(stackpage, "emblem-system-symbolic");
 
   return obj;
 }

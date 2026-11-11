@@ -14,19 +14,8 @@
       <object class="GtkStack" id="stack">
         <property name="vexpand">true</property>
         <property name="hexpand">true</property>
+        <property name="css-classes">layout-stack</property>
         <!-- <child>
-          <object class="GtkStackPage" id="processes">
-            <property name="name">processes</property>
-            <property name="title">Processes</property>
-            <property name="icon-name">application-x-executable-symbolic</property>
-            <property name="child">
-              <object class="GtkLabel">
-                <property name="label">It was dark</property>
-              </object>
-            </property>
-          </object>
-        </child> -->
-        <child>
           <object class="GtkStackPage">
             <property name="name">settings</property>
             <property name="title">Settings</property>
@@ -37,7 +26,7 @@
               </object>
             </property>
           </object>
-        </child>
+        </child> -->
       </object>
     </child>
   </template>

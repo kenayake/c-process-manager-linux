@@ -69,8 +69,6 @@ static void pm_run_window_class_init(PmRunWindowClass *klass) {
 
   object_class->get_property = pm_run_window_get_property;
 
-  gtk_widget_class_bind_template_child(widget_class, PmRunWindow, entry);
-
   properties[PROP_ENTRY] = g_param_spec_object(
       "entry", "Entry", "The run window entry widget", GTK_TYPE_ENTRY,
       G_PARAM_READABLE);

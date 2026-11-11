@@ -1,5 +1,6 @@
 #include "layout/process-layout.h"
 #include "components/icon-button.h"
+#include "gtk/gtk.h"
 #include "util/alert-dialog.h"
 #include "components/run-window.h"
 #include "core/process-item.h"
