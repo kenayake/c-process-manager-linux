@@ -8,21 +8,23 @@
   --accent2: rgba(140, 205, 255, 0.7);
   --accent3: rgba(91, 173, 255, 0.7);
   --accent4: rgba(0, 120, 212, 0.7);
-  --sidebar-toggle-selected-color: rgba(0, 0, 0, 0.06);
+  --surface-color-2: rgba(0, 0, 0, 0.08);
+  --card-color: #ffffff;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --text-color: #ffffff;
-    --bg-color: #1c1c1c;
-    --surface-color: #282828;
+    --bg-color: rgb(26, 26, 26);
+    --surface-color: rgb(32, 32, 32);
     --selection-color: rgba(238, 238, 238, 0.05);
     --border-color: #333333;
     --accent1: rgba(0, 48, 84, 0.7);
     --accent2: rgba(0, 68, 120, 0.7);
     --accent3: rgba(0, 90, 158, 0.7);
     --accent4: rgba(0, 120, 212, 0.7);
-    --sidebar-toggle-selected-color: rgba(168, 168, 168, 0.08);
+    --surface-color-2: rgba(168, 168, 168, 0.1);
+    --card-color: #2c2c2c;
   }
 
   columnview row:selected .accent1 {
@@ -32,7 +34,6 @@
 
 tooltip {
   background-color: var(--bg-color);
-  color: var(--text-color);
 }
 
 /* Outside Content Area */
@@ -42,7 +43,6 @@ headerbar, .titlebar {
   background-color: var(--surface-color);
   background-image: none;
   border-bottom: 0px;
-  color: var(--text-color);
 }
 
 .stack-sidebar {
@@ -53,7 +53,6 @@ headerbar, .titlebar {
 
 .stack-sidebar button {
   padding: 8px;
-  color: var(--text-color);
 }
 
 .stack-sidebar .show-text-toggle {
@@ -64,21 +63,21 @@ headerbar, .titlebar {
 } 
 
 .stack-sidebar .show-text-toggle:hover {
-  background-color: var(--sidebar-toggle-selected-color);
+  background-color: var(--surface-color-2);
 } 
 
 .stack-sidebar .page-toggle:checked,.page-toggle:hover {
-  background-color: var(--sidebar-toggle-selected-color);
+  background-color: var(--surface-color-2);
   background-image: none;
   box-shadow: none;
 }
 
 .stack-sidebar button label {
-  padding-right: 48px;
+  margin-right: 128px;
   padding-left: 8px;
 }
 
-.background {
+window.background {
   background-color: var(--surface-color);
 }
 
@@ -92,7 +91,7 @@ entry.search {
 }
 
 /* Content Area */
-stack {
+.layout-stack {
   background-color: var(--surface-color);
 }
 
@@ -111,10 +110,6 @@ stack {
   border-left: 2px solid color-mix(in srgb, var(--surface-color) 50%, var(--border-color) 50%);
   border-top-left-radius: 20px;
   background-color: var(--bg-color);
-}
-
-.process-layout label,image {
-  color: var(--text-color);
 }
 
 columnview cell {
@@ -153,7 +148,6 @@ columnview listview {
 
 treeexpander indent,expander{
   -gtk-icon-size: 16px;
-  color: var(--text-color);
 }
 
 /* For process metric colors */
@@ -175,4 +169,44 @@ columnview row:selected .accent1 {
 
 .accent4 {
   background-color: var(--accent4);
+}
+
+/* Settings Page */
+.settings {
+  padding-left: 32px;
+  padding-right: 32px;
+}
+
+.settings-card {
+  margin-top: 16px;
+  padding: 24px;
+  gap: 16px;
+  background-color: var(--card-color);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+}
+
+.settings-card image{
+  margin-right: 32px;
+}
+
+.h1 {
+  font-weight: 600;
+  font-size: xx-large;
+  padding-top: 24px;
+}
+
+.h2 {
+  font-weight: 600;
+  font-size: x-large;
+  padding-top: 32px;
+}
+
+.setting-title {
+  font-size: large;
+}
+
+.setting-subtitle {
+  margin-top: 4px;
+  color: alpha( var(--text-color) , 0.7);
 }

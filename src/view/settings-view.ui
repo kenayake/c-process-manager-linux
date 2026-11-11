@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="PmSettingsView" parent="GtkBox">
+    <property name="orientation">vertical</property>
+    <property name="vexpand">true</property>
+    <property name="hexpand">true</property>
+    <property name="css-classes">settings</property>
+    <child>
+      <!-- Settings Header -->
+      <object class="GtkLabel">
+        <property name="label">Settings</property>
+        <property name="css-classes">h1</property>
+        <property name="halign">start</property>
+      </object>
+    </child>
+    <child>
+      <!-- Appearance Section -->
+      <object class="GtkBox">
+        <property name="orientation">vertical</property>
+        <child>
+          <object class="GtkLabel">
+            <property name="label">Appearance</property>
+            <property name="css-classes">h2</property>
+            <property name="halign">start</property>
+          </object>
+        </child>
+        <child>
+          <!-- App Theme Card -->
+          <object class="GtkBox">
+            <property name="css-classes">settings-card</property>
+            <!-- Icon -->
+            <child>
+              <object class="GtkImage">
+                <property name="icon-name">applications-graphics-symbolic</property>
+                <property name="icon-size">GTK_ICON_SIZE_LARGE</property>
+              </object>
+            </child>
+            <!-- Settings text -->
+            <child>
+              <object class="GtkBox">
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label">App Theme</property>
+                    <property name="css-classes">setting-title</property>
+                    <property name="halign">start</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label">Select which app theme to display</property>
+                    <property name="css-classes">setting-subtitle</property>
+                    <property name="halign">start</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <!-- Spacing -->
+            <child>
+              <object class="GtkBox">
+                <property name="hexpand">true</property>
+              </object>
+            </child>
+            <!-- Settings Field -->
+            <child>
+              <object class="GtkDropDown" id="theme_field">
+                <property name="vexpand">false</property>
+                <property name="model">
+                  <object class="GtkStringList">
+                    <items>
+                      <item translatable="yes">Use system setting</item>
+                      <item translatable="yes">Light</item>
+                      <item translatable="yes">Dark</item>
+                    </items>
+                  </object>
+                </property>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <!-- General Section -->
+      <object class="GtkBox">
+        <property name="orientation">vertical</property>
+        <child>
+          <object class="GtkLabel">
+            <property name="label">General</property>
+            <property name="css-classes">h2</property>
+            <property name="halign">start</property>
+          </object>
+        </child>
+        <child>
+          <!-- Update Speed Card -->
+          <object class="GtkBox">
+            <property name="css-classes">settings-card</property>
+            <!-- Icon -->
+            <child>
+              <object class="GtkImage">
+                <property name="icon-name">view-refresh</property>
+                <property name="icon-size">GTK_ICON_SIZE_LARGE</property>
+              </object>
+            </child>
+            <!-- Settings text -->
+            <child>
+              <object class="GtkBox">
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label">Real Time Update Speed</property>
+                    <property name="css-classes">setting-title</property>
+                    <property name="halign">start</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label">Choose how often to update the system resource usage report</property>
+                    <property name="css-classes">setting-subtitle</property>
+                    <property name="halign">start</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <!-- Spacing -->
+            <child>
+              <object class="GtkBox">
+                <property name="hexpand">true</property>
+              </object>
+            </child>
+            <!-- Settings Field -->
+            <child>
+              <object class="GtkDropDown" id="refresh_field">
+                <property name="vexpand">false</property>
+                <property name="model">
+                  <object class="GtkStringList">
+                    <items>
+                      <item translatable="yes">1 second</item>
+                      <item translatable="yes">2 seconds</item>
+                      <item translatable="yes">3 seconds</item>
+                      <item translatable="yes">5 seconds</item>
+                    </items>
+                  </object>
+                </property>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </template>
+</interface>
