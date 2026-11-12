@@ -34,6 +34,7 @@ struct _PmProcessItem {
   gdouble cpu;
   gdouble memory;
   gdouble disk;
+  gint interval;
   gchar *user;
   gchar *priority;
   gboolean has_children;
@@ -59,6 +60,7 @@ enum {
   PROP_PGID,
   PROP_CPU_USED,
   PROP_DISK_USAGE,
+  PROP_INTERVAL,
   N_PROPERTIES
 };
 
@@ -117,6 +119,10 @@ static void process_item_set_property(GObject *object, guint property_id,
     self->disk_usage = *(DiskUsage *)g_value_get_boxed(value);
     break;
 
+  case PROP_INTERVAL:
+    self->interval = g_value_get_int(value);
+    break;
+
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
     break;
@@ -170,6 +176,10 @@ static void process_item_get_property(GObject *object, guint property_id,
 
   case PROP_DISK_USAGE:
     g_value_set_boxed(value, &self->disk_usage);
+    break;
+
+  case PROP_INTERVAL:
+    g_value_set_int(value, self->interval);
     break;
 
   default:
@@ -237,10 +247,17 @@ static void pm_process_item_class_init(PmProcessItemClass *klass) {
       "disk-usage", "Disk Usage", "Disk usage information", TYPE_DISK_USAGE,
       G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
+  properties[PROP_INTERVAL] =
+      g_param_spec_int("interval", "Interval", "The refresh interval in seconds",
+                       1, G_MAXINT, 1,
+                       G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+
   g_object_class_install_properties(object_class, N_PROPERTIES, properties);
 }
 
 static void pm_process_item_init(PmProcessItem *self) {
+  g_autoptr(GSettings) app_settings;
+
   self->name = NULL;
   self->status = NULL;
   self->user = NULL;
@@ -248,6 +265,10 @@ static void pm_process_item_init(PmProcessItem *self) {
   self->cpu = 0.0;
   self->disk = 0.0;
   self->memory = 0.0;
+  self->interval = 1;
+
+  app_settings = g_settings_new("com.github.kenayake.ProcessManager");
+  g_settings_bind(app_settings, "refresh-secs", self, "interval",  G_SETTINGS_BIND_DEFAULT);
 }
 
 PmProcessItem *process_item_new(pid_t pid, gboolean has_children) {
@@ -317,8 +338,6 @@ void process_item_update_from_raw(PmProcessItem *item, ProcessRaw *raw, guint64 
 
   struct passwd *user_entry = getpwuid(raw->uid);
 
-  int interval = 1; // replace with refresh_secs setting later
-
   // Calculate cpu usage percent
   long cores = sysconf(_SC_NPROCESSORS_ONLN);
   gint64 cpu_new = raw->cpu_usage.utime + raw->cpu_usage.stime;
@@ -334,7 +353,8 @@ void process_item_update_from_raw(PmProcessItem *item, ProcessRaw *raw, guint64 
   // Calculate disk usage
   guint64 disk_old = item->disk_usage.read_bytes + item->disk_usage.write_bytes;
   guint64 disk_new = raw->disk_usage.read_bytes + raw->disk_usage.write_bytes;
-  double disk = ((double)disk_new - disk_old) / (interval * 1024 * 1024);
+  double disk =
+      ((double)disk_new - disk_old) / ((double)item->interval * 1024 * 1024);
 
   g_object_set(item, "pgid", raw->pgrp, "name", raw->comm, "status", raw->state, "priority",
               (raw->priority + raw->nice) < 0 ? "Real-Time" : "Normal", "user",

@@ -21,6 +21,7 @@
 #include "config.h"
 #include <glib/gi18n.h>
 
+#include "gdk/gdk.h"
 #include "gio/gio.h"
 #include "glib-object.h"
 #include "glib.h"
@@ -48,26 +49,44 @@ process_manager_application_new(const char *application_id,
 
 static void process_manager_application_activate(GApplication *app) {
   GtkWindow *window;
-  GtkSettings *settings;
+  GtkSettings *gtk_settings;
+  GSettings *app_settings;
   GtkCssProvider *provider;
   GtkInterfaceColorScheme scheme;
+  gint theme;
+  GdkDisplay *display;
 
   g_assert(PROCESS_MANAGER_IS_APPLICATION(app));
 
-  settings = gtk_settings_get_default();
-  g_object_get(settings, "gtk-interface-color-scheme", &scheme, NULL);
-  g_object_set(settings, "gtk-interface-color-scheme", scheme, NULL);
+  // Setup theme from settings
+  app_settings = g_settings_new("com.github.kenayake.ProcessManager");
+  theme = g_settings_get_int(app_settings, "theme");
+
+  gtk_settings = gtk_settings_get_default();
+  if (theme == 1) {
+    // system default
+    g_object_get(gtk_settings, "gtk-interface-color-scheme", &scheme, NULL);
+    g_object_set(gtk_settings, "gtk-interface-color-scheme", scheme, NULL);
+  } else if (theme == 2) {
+    // light
+    g_object_set(gtk_settings, "gtk-interface-color-scheme", GTK_INTERFACE_COLOR_SCHEME_LIGHT, NULL);
+  } else {
+    // dark
+    g_object_set(gtk_settings, "gtk-interface-color-scheme", GTK_INTERFACE_COLOR_SCHEME_DARK, NULL);
+  }
 
   provider = gtk_css_provider_new();
   gtk_css_provider_load_from_path(provider, "src/global.css");
 
-  g_object_bind_property(settings, "gtk-interface-color-scheme", provider, "prefers-color-scheme", G_BINDING_SYNC_CREATE);
+  g_object_bind_property(gtk_settings, "gtk-interface-color-scheme", provider, "prefers-color-scheme", G_BINDING_SYNC_CREATE);
 
+  display = gdk_display_get_default();
   gtk_style_context_add_provider_for_display(
-      gdk_display_get_default(), GTK_STYLE_PROVIDER(provider),
+      display, GTK_STYLE_PROVIDER(provider),
       GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
   g_object_unref(provider);
-  g_object_unref(settings);
+  g_object_unref(gtk_settings);
+  g_object_unref(app_settings);
 
   window = gtk_application_get_active_window(GTK_APPLICATION(app));
 

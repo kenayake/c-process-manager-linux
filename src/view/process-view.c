@@ -1,18 +1,18 @@
-#include "components/process-details.h"
 #include "process-view.h"
 #include "components/expander-cell.h"
 #include "components/numeric-cell.h"
+#include "components/process-details.h"
 #include "components/table-cell.h"
 #include "core/process-item.h"
 #include "core/process-model.h"
 #include "core/system-status.h"
-#include "util/alert-dialog.h"
 #include "gdk/gdk.h"
 #include "gio/gio.h"
 #include "glib-object.h"
 #include "glib.h"
 #include "glibconfig.h"
 #include "graphene.h"
+#include "util/alert-dialog.h"
 #include <gtk/gtk.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -43,11 +43,7 @@ struct _PmProcessView {
   GtkFilterListModel *filter_model;
 };
 
-enum {
-  PROP_0,
-  PROP_SELECTION,
-  N_PROPERTIES
-};
+enum { PROP_0, PROP_SELECTION, PROP_TIMEOUT_ID, N_PROPERTIES };
 
 static GParamSpec *properties[N_PROPERTIES];
 
@@ -61,32 +57,55 @@ static void pm_process_view_get_property(GObject *object, guint property_id,
   case PROP_SELECTION:
     g_value_set_object(value, self->selection);
     break;
+  case PROP_TIMEOUT_ID:
+    g_value_set_uint(value, self->timeout_id);
+    break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
     break;
   }
 }
 
-static void kill_process(GSimpleAction *action, GVariant *parameter, gpointer user_data) {
-  g_autoptr(GError) error = NULL;
-  PmProcessView *self = PM_PROCESS_VIEW(user_data);
-  GtkTreeListRow *activeTreeRow = gtk_single_selection_get_selected_item(self->selection);
-  PmProcessItem *selectedProcess = gtk_tree_list_row_get_item(activeTreeRow);
+static void pm_process_view_set_property(GObject *object, guint property_id,
+                                         const GValue *value,
+                                         GParamSpec *pspec) {
+  PmProcessView *self = PM_PROCESS_VIEW(object);
 
-  if (!process_item_kill_process(selectedProcess, &error)) {
-    GtkRoot *root = gtk_widget_get_root (GTK_WIDGET(self->column_view));
-    show_alert(GTK_WINDOW (root), "Kill Process Failed", error);
+  switch (property_id) {
+  case PROP_TIMEOUT_ID:
+    self->timeout_id = g_value_get_uint(value);
+    break;
+  default:
+    G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
+    break;
   }
 }
 
-static void open_properties(GSimpleAction *action, GVariant *parameter, gpointer user_data) {
+static void kill_process(GSimpleAction *action, GVariant *parameter,
+                         gpointer user_data) {
+  g_autoptr(GError) error = NULL;
   PmProcessView *self = PM_PROCESS_VIEW(user_data);
-  GtkTreeListRow *activeTreeRow = gtk_single_selection_get_selected_item(self->selection);
+  GtkTreeListRow *activeTreeRow =
+      gtk_single_selection_get_selected_item(self->selection);
   PmProcessItem *selectedProcess = gtk_tree_list_row_get_item(activeTreeRow);
-  GtkRoot *root = gtk_widget_get_root (GTK_WIDGET(self->column_view));
-  GtkWindow *parent_window = GTK_WINDOW (root);
 
-  pid_t pid; gchararray name;
+  if (!process_item_kill_process(selectedProcess, &error)) {
+    GtkRoot *root = gtk_widget_get_root(GTK_WIDGET(self->column_view));
+    show_alert(GTK_WINDOW(root), "Kill Process Failed", error);
+  }
+}
+
+static void open_properties(GSimpleAction *action, GVariant *parameter,
+                            gpointer user_data) {
+  PmProcessView *self = PM_PROCESS_VIEW(user_data);
+  GtkTreeListRow *activeTreeRow =
+      gtk_single_selection_get_selected_item(self->selection);
+  PmProcessItem *selectedProcess = gtk_tree_list_row_get_item(activeTreeRow);
+  GtkRoot *root = gtk_widget_get_root(GTK_WIDGET(self->column_view));
+  GtkWindow *parent_window = GTK_WINDOW(root);
+
+  pid_t pid;
+  gchararray name;
   PmProcessDetails *details;
 
   g_object_get(selectedProcess, "pid", &pid, "name", &name, NULL);
@@ -98,32 +117,33 @@ static void open_properties(GSimpleAction *action, GVariant *parameter, gpointer
   process_item_print_item(selectedProcess);
 }
 
-static void open_dir(GSimpleAction *action, GVariant *parameter, gpointer user_data) {
+static void open_dir(GSimpleAction *action, GVariant *parameter,
+                     gpointer user_data) {
   g_autoptr(GError) error = NULL;
   PmProcessView *self = PM_PROCESS_VIEW(user_data);
-  GtkTreeListRow *activeTreeRow = gtk_single_selection_get_selected_item(self->selection);
+  GtkTreeListRow *activeTreeRow =
+      gtk_single_selection_get_selected_item(self->selection);
   PmProcessItem *selectedProcess = gtk_tree_list_row_get_item(activeTreeRow);
-  
+
   // const gchar *type_name = g_type_name(G_OBJECT_TYPE(child2));
   if (!process_item_open_folder(selectedProcess, &error)) {
-    GtkRoot *root = gtk_widget_get_root (GTK_WIDGET(self->column_view));
-    show_alert(GTK_WINDOW (root), "Open Directory Failed", error);
+    GtkRoot *root = gtk_widget_get_root(GTK_WIDGET(self->column_view));
+    show_alert(GTK_WINDOW(root), "Open Directory Failed", error);
   }
 }
 
-static GActionGroup *
-create_action_group (PmProcessView *self) {
+static GActionGroup *create_action_group(PmProcessView *self) {
   const GActionEntry entries[] = {
-      { "kill", kill_process, NULL, NULL, NULL },
-      { "properties", open_properties, NULL, NULL, NULL },
-      { "open-dir", open_dir, NULL, NULL, NULL }
-  };
+      {"kill", kill_process, NULL, NULL, NULL},
+      {"properties", open_properties, NULL, NULL, NULL},
+      {"open-dir", open_dir, NULL, NULL, NULL}};
   GSimpleActionGroup *group;
 
-  group = g_simple_action_group_new ();
-  g_action_map_add_action_entries (G_ACTION_MAP (group), entries, G_N_ELEMENTS (entries), self);
+  group = g_simple_action_group_new();
+  g_action_map_add_action_entries(G_ACTION_MAP(group), entries,
+                                  G_N_ELEMENTS(entries), self);
 
-  return G_ACTION_GROUP (group);
+  return G_ACTION_GROUP(group);
 }
 
 static void create_popover(PmProcessView *self) {
@@ -133,7 +153,8 @@ static void create_popover(PmProcessView *self) {
   GtkColumnView *column_view;
 
   column_view = GTK_COLUMN_VIEW(self->column_view);
-  builder = gtk_builder_new_from_resource("/com/github/kenayake/ProcessManager/view/process-view.ui");
+  builder = gtk_builder_new_from_resource(
+      "/com/github/kenayake/ProcessManager/view/process-view.ui");
   menu = G_MENU_MODEL(gtk_builder_get_object(builder, "ctx_menu"));
 
   group = create_action_group(self);
@@ -144,7 +165,7 @@ static void create_popover(PmProcessView *self) {
   gtk_popover_set_has_arrow(GTK_POPOVER(self->popover), FALSE);
 }
 
-gboolean bind_numeric_to_label(GBinding *binding, const GValue *from_value,
+static gboolean bind_numeric_to_label(GBinding *binding, const GValue *from_value,
                                GValue *to_value, gpointer user_data) {
   UserData *data = user_data;
 
@@ -158,10 +179,10 @@ gboolean bind_numeric_to_label(GBinding *binding, const GValue *from_value,
   return TRUE;
 }
 
-static void on_right_click(GtkGestureClick *self, gint n_press, gdouble x, gdouble y, gpointer user_data) {
+static void on_right_click(GtkGestureClick *self, gint n_press, gdouble x,
+                           gdouble y, gpointer user_data) {
   PmProcessView *process_view = PM_PROCESS_VIEW(user_data);
-  GtkListItem *list_item =
-      g_object_get_data(G_OBJECT(self), "list-item");
+  GtkListItem *list_item = g_object_get_data(G_OBJECT(self), "list-item");
   guint position = gtk_list_item_get_position(list_item);
   GtkWidget *source;
   graphene_point_t point;
@@ -177,13 +198,13 @@ static void on_right_click(GtkGestureClick *self, gint n_press, gdouble x, gdoub
   source = gtk_event_controller_get_widget(GTK_EVENT_CONTROLLER(self));
   point = GRAPHENE_POINT_INIT((float)x, (float)y);
 
-  if (!gtk_widget_compute_point(source, process_view->column_view,
-                                &point, &point_in_view)) {
+  if (!gtk_widget_compute_point(source, process_view->column_view, &point,
+                                &point_in_view)) {
     g_warning("Could not convert click coordinates to column-view coordinates");
     return;
   }
 
-  rect = (GdkRectangle){ (int)point_in_view.x, (int)point_in_view.y, 1, 1 };
+  rect = (GdkRectangle){(int)point_in_view.x, (int)point_in_view.y, 1, 1};
   popover = GTK_POPOVER(process_view->popover);
 
   gtk_popover_set_pointing_to(popover, &rect);
@@ -196,32 +217,29 @@ static void setup_expander_column(GtkSignalListItemFactory *factory,
                                   GtkListItem *list_item, gpointer user_data) {
   GtkWidget *expander;
   GtkGesture *click;
-
+  // TODO: Set column size to fixed n chars
   expander = pm_expander_cell_new(NULL);
   gtk_list_item_set_child(list_item, expander);
 
   click = gtk_gesture_click_new();
-  gtk_gesture_single_set_button(GTK_GESTURE_SINGLE(click), GDK_BUTTON_SECONDARY);
+  gtk_gesture_single_set_button(GTK_GESTURE_SINGLE(click),
+                                GDK_BUTTON_SECONDARY);
   g_object_set_data(G_OBJECT(click), "list-item", list_item);
-  g_signal_connect_object(click, "pressed",
-                        G_CALLBACK(on_right_click),
-                        user_data, 0);
+  g_signal_connect_object(click, "pressed", G_CALLBACK(on_right_click),
+                          user_data, 0);
   gtk_widget_add_controller(expander, GTK_EVENT_CONTROLLER(click));
 }
 
-static gboolean
-hide_expander (GBinding     *binding,
-              const GValue *from_value,
-              GValue       *to_value,
-              gpointer      user_data)
-{
-  PmProcessItem *item = g_value_get_object (from_value);
+static gboolean hide_expander(GBinding *binding, const GValue *from_value,
+                              GValue *to_value, gpointer user_data) {
+  PmProcessItem *item = g_value_get_object(from_value);
 
-  // If the row returns no child model, or if the model contains 0 items, hide the expander arrow.
+  // If the row returns no child model, or if the model contains 0 items, hide
+  // the expander arrow.
   if (process_item_has_children(item)) {
-      g_value_set_boolean (to_value, FALSE);
+    g_value_set_boolean(to_value, FALSE);
   } else {
-      g_value_set_boolean (to_value, TRUE);
+    g_value_set_boolean(to_value, TRUE);
   }
 
   return TRUE;
@@ -248,15 +266,10 @@ static void bind_expander_column(GtkSignalListItemFactory *factory,
 
   binding = g_object_bind_property(process, data->name, expander, "label",
                                    G_BINDING_SYNC_CREATE);
-  
-  expander_binding = g_object_bind_property_full (
-        G_OBJECT (row), "item",
-        G_OBJECT (expander), "hide-expander",
-        G_BINDING_SYNC_CREATE,
-        hide_expander,
-        NULL, NULL, NULL
-    );
 
+  expander_binding = g_object_bind_property_full(
+      G_OBJECT(row), "item", G_OBJECT(expander), "hide-expander",
+      G_BINDING_SYNC_CREATE, hide_expander, NULL, NULL, NULL);
 
   key = g_strdup_printf("%s-key", data->name);
 
@@ -278,11 +291,11 @@ static void setup_generic_column(GtkSignalListItemFactory *factory,
   gtk_list_item_set_child(list_item, label);
 
   click = gtk_gesture_click_new();
-  gtk_gesture_single_set_button(GTK_GESTURE_SINGLE(click), GDK_BUTTON_SECONDARY);
+  gtk_gesture_single_set_button(GTK_GESTURE_SINGLE(click),
+                                GDK_BUTTON_SECONDARY);
   g_object_set_data(G_OBJECT(click), "list-item", list_item);
-  g_signal_connect_object(click, "pressed",
-                        G_CALLBACK(on_right_click),
-                        user_data, 0);
+  g_signal_connect_object(click, "pressed", G_CALLBACK(on_right_click),
+                          user_data, 0);
   gtk_widget_add_controller(label, GTK_EVENT_CONTROLLER(click));
 }
 
@@ -297,11 +310,11 @@ static void setup_numeric_column(GtkSignalListItemFactory *factory,
   gtk_list_item_set_child(list_item, label);
 
   click = gtk_gesture_click_new();
-  gtk_gesture_single_set_button(GTK_GESTURE_SINGLE(click), GDK_BUTTON_SECONDARY);
+  gtk_gesture_single_set_button(GTK_GESTURE_SINGLE(click),
+                                GDK_BUTTON_SECONDARY);
   g_object_set_data(G_OBJECT(click), "list-item", list_item);
-  g_signal_connect_object(click, "pressed",
-                        G_CALLBACK(on_right_click),
-                        data->process_view, 0);
+  g_signal_connect_object(click, "pressed", G_CALLBACK(on_right_click),
+                          data->process_view, 0);
   gtk_widget_add_controller(label, GTK_EVENT_CONTROLLER(click));
 }
 
@@ -398,7 +411,8 @@ static GtkColumnViewColumn *create_first_column(const gchar *prop_name,
 
   factory = gtk_signal_list_item_factory_new();
 
-  g_signal_connect(factory, "setup", G_CALLBACK(setup_expander_column), process_view);
+  g_signal_connect(factory, "setup", G_CALLBACK(setup_expander_column),
+                   process_view);
 
   g_signal_connect(factory, "bind", G_CALLBACK(bind_expander_column),
                    user_data);
@@ -427,7 +441,7 @@ static GtkColumnViewColumn *create_numeric_column(const gchar *prop_name,
                                                   const gchar *title,
                                                   const gchar *suffix,
                                                   const gdouble max,
-                                                PmProcessView *self) {
+                                                  PmProcessView *self) {
   GtkListItemFactory *factory;
   GtkColumnViewColumn *column;
   GtkExpression *expr;
@@ -467,7 +481,7 @@ static GtkColumnViewColumn *create_numeric_column(const gchar *prop_name,
 
 static GtkColumnViewColumn *create_string_column(const gchar *prop_name,
                                                  const gchar *title,
-                                                  PmProcessView *self) {
+                                                 PmProcessView *self) {
   GtkListItemFactory *factory;
   GtkColumnViewColumn *column;
   GtkExpression *expr;
@@ -539,29 +553,44 @@ static gboolean on_timeout_tick(gpointer user_data) {
   return G_SOURCE_CONTINUE;
 }
 
-void on_view_map(GtkWidget *self, gpointer user_data) {
+static void on_view_unmap(GtkWidget *self, gpointer user_data) {
   PmProcessView *process_view = PM_PROCESS_VIEW(user_data);
 
-  process_view->timeout_id = g_timeout_add(
-      1000, on_timeout_tick, process_view); // replace with interval setting
+  if (process_view->timeout_id > 0) {
+    g_source_remove(process_view->timeout_id);
+    process_view->timeout_id = 0;
+  }
 }
 
-void on_view_unmap(GtkWidget *self, gpointer user_data) {
+static gboolean on_timeout_changed(GValue* value, GVariant* variant, gpointer user_data) {
+  gint timeout_id;
   PmProcessView *process_view = PM_PROCESS_VIEW(user_data);
+  gint interval = g_variant_get_int32(variant);
 
-  g_source_remove(process_view->timeout_id);
+  if (process_view->timeout_id > 0) {
+    g_source_remove(process_view->timeout_id);
+    process_view->timeout_id = 0;
+  }
+
+  timeout_id = g_timeout_add(interval * 1000, on_timeout_tick, process_view);
+  g_value_set_uint(value, timeout_id);
+  
+  return TRUE;
 }
 
 static void pm_process_view_class_init(PmProcessViewClass *klass) {
   GObjectClass *object_class = G_OBJECT_CLASS(klass);
 
   object_class->get_property = pm_process_view_get_property;
+  object_class->set_property = pm_process_view_set_property;
 
-  properties[PROP_SELECTION] =
-      g_param_spec_object("selection", "Selection",
-                          "The process view selection model",
-                          GTK_TYPE_SINGLE_SELECTION,
-                          G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+  properties[PROP_SELECTION] = g_param_spec_object(
+      "selection", "Selection", "The process view selection model",
+      GTK_TYPE_SINGLE_SELECTION, G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+  properties[PROP_TIMEOUT_ID] =
+      g_param_spec_uint("timeout-id", "Timeout ID",
+                        "The refresh timeout source ID", 0, G_MAXUINT, 0,
+                        G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
   g_object_class_install_properties(object_class, N_PROPERTIES, properties);
 }
 
@@ -575,11 +604,12 @@ void pm_process_view_init(PmProcessView *self) {
   PmSystemStatus *sys_stat;
   gdouble disk_usage;
   guint64 mem_total;
+  g_autoptr(GSettings) settings;
 
   sys_stat = pm_system_status_new();
   system_status_get_status(sys_stat);
-  g_object_get(sys_stat,  "mem_total", &mem_total,
-               "disk_usage", &disk_usage, NULL);
+  g_object_get(sys_stat, "mem_total", &mem_total, "disk_usage", &disk_usage,
+               NULL);
 
   // Get model
   model = g_list_store_new(PM_TYPE_PROCESS_ITEM);
@@ -612,8 +642,10 @@ void pm_process_view_init(PmProcessView *self) {
   tree_sorter =
       GTK_SORTER(gtk_tree_list_row_sorter_new(g_object_ref(view_sorter)));
 
-  self->filter_model = gtk_filter_list_model_new(G_LIST_MODEL(tree_model), NULL);
-  sort_model = gtk_sort_list_model_new(G_LIST_MODEL(self->filter_model), tree_sorter);
+  self->filter_model =
+      gtk_filter_list_model_new(G_LIST_MODEL(tree_model), NULL);
+  sort_model =
+      gtk_sort_list_model_new(G_LIST_MODEL(self->filter_model), tree_sorter);
 
   self->selection = gtk_single_selection_new(G_LIST_MODEL(sort_model));
 
@@ -630,31 +662,43 @@ void pm_process_view_init(PmProcessView *self) {
                                 create_first_column("name", "Name", self));
   gtk_column_view_append_column(GTK_COLUMN_VIEW(column_view),
                                 create_string_column("status", "Status", self));
-  gtk_column_view_append_column(GTK_COLUMN_VIEW(column_view),
-                                create_numeric_column("pid", "PID", NULL, INTMAX_MAX, self));
+  gtk_column_view_append_column(
+      GTK_COLUMN_VIEW(column_view),
+      create_numeric_column("pid", "PID", NULL, INTMAX_MAX, self));
   gtk_column_view_append_column(
       GTK_COLUMN_VIEW(column_view),
       create_numeric_column("cpu", "CPU", "%", 100.0, self));
-  gtk_column_view_append_column(
-      GTK_COLUMN_VIEW(column_view),
-      create_numeric_column("memory", "Memory", " MB", (double)mem_total/1e+6, self));
+  gtk_column_view_append_column(GTK_COLUMN_VIEW(column_view),
+                                create_numeric_column("memory", "Memory", " MB",
+                                                      (double)mem_total / 1e+6,
+                                                      self));
   gtk_column_view_append_column(
       GTK_COLUMN_VIEW(column_view),
       create_numeric_column("disk", "Disk", " MB/s", disk_usage, self));
   gtk_column_view_append_column(GTK_COLUMN_VIEW(column_view),
                                 create_string_column("user", "User", self));
-  gtk_column_view_append_column(GTK_COLUMN_VIEW(column_view),
-                                create_string_column("priority", "Priority", self));
+  gtk_column_view_append_column(
+      GTK_COLUMN_VIEW(column_view),
+      create_string_column("priority", "Priority", self));
 
-  g_signal_connect(column_view, "map", G_CALLBACK(on_view_map), self);
+  // g_signal_connect(column_view, "map", G_CALLBACK(on_view_map), self);
   g_signal_connect(column_view, "unmap", G_CALLBACK(on_view_unmap), self);
 
   self->column_view = column_view;
   self->model = G_LIST_MODEL(model);
   self->sys_stat = sys_stat;
+  self->timeout_id = 0;
 
   // Context Menu
   create_popover(self);
+
+  // timeout
+  settings = g_settings_new("com.github.kenayake.ProcessManager");
+  g_settings_bind_with_mapping(settings, "refresh-secs", self,
+                               "timeout-id",  G_SETTINGS_BIND_GET,
+                               on_timeout_changed,
+                               NULL,
+                               self, NULL);
 }
 
 PmProcessView *process_view_new(GtkFilter *filter) {

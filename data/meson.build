@@ -1,3 +1,4 @@
+gnome = import('gnome')
 desktop_file = i18n.merge_file(
         input: 'com.github.kenayake.ProcessManager.desktop.in',
        output: 'com.github.kenayake.ProcessManager.desktop',
@@ -26,6 +27,10 @@ test('Validate appstream file', appstreamcli,
 
 install_data('com.github.kenayake.ProcessManager.gschema.xml',
   install_dir: get_option('datadir') / 'glib-2.0' / 'schemas'
+)
+gnome.compile_schemas(
+  build_by_default: true,
+  depend_files: files('com.github.kenayake.ProcessManager.gschema.xml')
 )
 
 compile_schemas = find_program('glib-compile-schemas', required: false, disabler: true)

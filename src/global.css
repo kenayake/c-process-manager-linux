@@ -4,10 +4,10 @@
   --surface-color: #f3f3f3;
   --selection-color: #eeeeee;
   --border-color: #d2d2d2;
-  --accent1: rgba(199, 224, 244, 0.7);
-  --accent2: rgba(140, 205, 255, 0.7);
-  --accent3: rgba(91, 173, 255, 0.7);
-  --accent4: rgba(0, 120, 212, 0.7);
+  --accent1: rgba(199, 224, 244, 0.8);
+  --accent2: rgba(140, 205, 255, 0.8);
+  --accent3: rgba(91, 173, 255, 0.8);
+  --accent4: rgba(0, 120, 212, 0.8);
   --surface-color-2: rgba(0, 0, 0, 0.08);
   --card-color: #ffffff;
 }
@@ -86,7 +86,6 @@ entry.search {
   padding-left: 12px;
   font-size: large;
   background-color: var(--selection-color);
-  color: var(--text-color);
   border-color: var(--border-color);
 }
 

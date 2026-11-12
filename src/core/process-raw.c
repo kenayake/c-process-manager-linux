@@ -127,9 +127,12 @@ static gboolean parse_stat(long pid, ProcessRaw *data, GError **error) {
 static gboolean parse_uid(long pid, ProcessRaw *data, GError **error) {
   g_autofree gchar *filepath = g_strdup_printf("/proc/%ld/status", pid);
 
-  GFile *file = g_file_new_for_path(filepath);
-  GFileInputStream *in_stream = g_file_read(file, NULL, NULL);
-  GDataInputStream *data_stream = g_data_input_stream_new(G_INPUT_STREAM(in_stream));
+  g_autoptr(GFile) file = g_file_new_for_path(filepath);
+  g_autoptr(GFileInputStream) in_stream = g_file_read(file, NULL, NULL);
+  if (in_stream == NULL) {
+    return FALSE;
+  }
+  g_autoptr(GDataInputStream) data_stream = g_data_input_stream_new(G_INPUT_STREAM(in_stream));
 
   char *line;
   gsize length;
@@ -142,17 +145,13 @@ static gboolean parse_uid(long pid, ProcessRaw *data, GError **error) {
       // get effective uid
       sscanf(line + 4, "%d %d %d %d", &ruid, &euid, &suid, &fsuid);
       data->uid = ruid;
-
-      g_object_unref(data_stream);
-      g_object_unref(in_stream);
-      g_object_unref(file);
       return TRUE;
     }
   }
 
   g_set_error_literal(error, PROCESS_RAW_PARSE_UID_ERROR, ProcessRawParseUIDError, "Failed to find UID");
 
-  return TRUE;
+  return FALSE;
 }
 
 static gboolean parse_statm(long pid, ProcessRaw *data, GError **error) {

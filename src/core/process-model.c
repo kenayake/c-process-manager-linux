@@ -249,6 +249,7 @@ GListModel *process_model_new(void) {
   return G_LIST_MODEL(store);
 }
 
+// TODO: return above if refresh fails
 void process_model_refresh(GListStore *store) {
   GError *error = NULL;
 

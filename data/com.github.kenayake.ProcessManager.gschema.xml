@@ -1,5 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist gettext-domain="process-manager">
+  <enum id="com.github.kenayake.ProcessManager.theme-enum">
+    <value nick="Use system settings" value="1"/>
+    <value nick="Light" value="2"/>
+    <value nick="Dark" value="3"/>
+  </enum>
+
+  <enum id="com.github.kenayake.ProcessManager.refresh-secs-enum">
+    <value nick="1 second" value="1"/>
+    <value nick="2 seconds" value="2"/>
+    <value nick="3 seconds" value="3"/>
+    <value nick="5 seconds" value="5"/>
+  </enum>
+
 	<schema id="com.github.kenayake.ProcessManager" path="/com/github/kenayake/ProcessManager/">
+    <key name="theme" type="i">
+      <default>1</default>
+      <summary>App theme setting</summary>
+    </key>
+
+    <key name="refresh-secs" type="i">
+      <default>1</default>
+      <summary>Refresh interval setting</summary>
+    </key>
 	</schema>
 </schemalist>
