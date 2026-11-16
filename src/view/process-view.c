@@ -24,6 +24,7 @@ typedef struct {
   const gchar *suffix;
   gdouble max;
   PmProcessView *process_view;
+  gint length;
 } UserData;
 
 typedef struct {
@@ -217,8 +218,12 @@ static void setup_expander_column(GtkSignalListItemFactory *factory,
                                   GtkListItem *list_item, gpointer user_data) {
   GtkWidget *expander;
   GtkGesture *click;
-  // TODO: Set column size to fixed n chars
-  expander = pm_expander_cell_new(NULL);
+  UserData *data;                                
+  PmProcessView *self;
+
+  data = (UserData *)user_data;
+  self = PM_PROCESS_VIEW(data->process_view);
+  expander = pm_expander_cell_new(NULL, data->length);
   gtk_list_item_set_child(list_item, expander);
 
   click = gtk_gesture_click_new();
@@ -226,7 +231,7 @@ static void setup_expander_column(GtkSignalListItemFactory *factory,
                                 GDK_BUTTON_SECONDARY);
   g_object_set_data(G_OBJECT(click), "list-item", list_item);
   g_signal_connect_object(click, "pressed", G_CALLBACK(on_right_click),
-                          user_data, 0);
+                          self, 0);
   gtk_widget_add_controller(expander, GTK_EVENT_CONTROLLER(click));
 }
 
@@ -285,8 +290,13 @@ static void setup_generic_column(GtkSignalListItemFactory *factory,
                                  GtkListItem *list_item, gpointer user_data) {
   GtkWidget *label;
   GtkGesture *click;
+  UserData *data;                                
+  PmProcessView *self;
 
-  label = pm_table_cell_new(NULL);
+  data = (UserData *)user_data;
+  self = PM_PROCESS_VIEW(data->process_view);
+
+  label = pm_table_cell_new(NULL, data->length);
 
   gtk_list_item_set_child(list_item, label);
 
@@ -295,7 +305,7 @@ static void setup_generic_column(GtkSignalListItemFactory *factory,
                                 GDK_BUTTON_SECONDARY);
   g_object_set_data(G_OBJECT(click), "list-item", list_item);
   g_signal_connect_object(click, "pressed", G_CALLBACK(on_right_click),
-                          user_data, 0);
+                          self, 0);
   gtk_widget_add_controller(label, GTK_EVENT_CONTROLLER(click));
 }
 
@@ -305,7 +315,7 @@ static void setup_numeric_column(GtkSignalListItemFactory *factory,
   UserData *data = user_data;
   GtkGesture *click;
 
-  label = pm_numeric_cell_new(0.0, data->max, data->suffix);
+  label = pm_numeric_cell_new(0.0, data->max, data->suffix, data->length);
 
   gtk_list_item_set_child(list_item, label);
 
@@ -400,6 +410,7 @@ static void unbind_generic_column(GtkSignalListItemFactory *factory,
 //! Note to self: dont turn it into builder factory, its not worth it
 static GtkColumnViewColumn *create_first_column(const gchar *prop_name,
                                                 const gchar *title,
+                                                gint length,
                                                 PmProcessView *process_view) {
   GtkListItemFactory *factory;
   GtkColumnViewColumn *column;
@@ -408,11 +419,13 @@ static GtkColumnViewColumn *create_first_column(const gchar *prop_name,
   UserData *user_data = g_new0(UserData, 1);
   user_data->name = prop_name;
   user_data->suffix = NULL;
+  user_data->length = length;
+  user_data->process_view = process_view;
 
   factory = gtk_signal_list_item_factory_new();
 
   g_signal_connect(factory, "setup", G_CALLBACK(setup_expander_column),
-                   process_view);
+                   user_data);
 
   g_signal_connect(factory, "bind", G_CALLBACK(bind_expander_column),
                    user_data);
@@ -423,8 +436,8 @@ static GtkColumnViewColumn *create_first_column(const gchar *prop_name,
   column = gtk_column_view_column_new(title, GTK_LIST_ITEM_FACTORY(factory));
 
   // set default column properties
+  gtk_column_view_column_set_fixed_width(column, length * 10);
   gtk_column_view_column_set_resizable(column, true);
-  gtk_column_view_column_set_expand(column, TRUE);
 
   // Setup expression-based sorter
   expr = gtk_property_expression_new(PM_TYPE_PROCESS_ITEM, NULL, prop_name);
@@ -441,6 +454,7 @@ static GtkColumnViewColumn *create_numeric_column(const gchar *prop_name,
                                                   const gchar *title,
                                                   const gchar *suffix,
                                                   const gdouble max,
+                                                  gint length,
                                                   PmProcessView *self) {
   GtkListItemFactory *factory;
   GtkColumnViewColumn *column;
@@ -451,6 +465,7 @@ static GtkColumnViewColumn *create_numeric_column(const gchar *prop_name,
   user_data->suffix = suffix;
   user_data->max = max;
   user_data->process_view = self;
+  user_data->length = length;
 
   factory = gtk_signal_list_item_factory_new();
 
@@ -465,8 +480,8 @@ static GtkColumnViewColumn *create_numeric_column(const gchar *prop_name,
   column = gtk_column_view_column_new(title, GTK_LIST_ITEM_FACTORY(factory));
 
   // set default column properties
+  gtk_column_view_column_set_fixed_width(column, length * 10);
   gtk_column_view_column_set_resizable(column, true);
-  gtk_column_view_column_set_expand(column, TRUE);
 
   // Setup expression-based sorter
   expr = gtk_property_expression_new(PM_TYPE_PROCESS_ITEM, NULL, prop_name);
@@ -481,6 +496,7 @@ static GtkColumnViewColumn *create_numeric_column(const gchar *prop_name,
 
 static GtkColumnViewColumn *create_string_column(const gchar *prop_name,
                                                  const gchar *title,
+                                                 gint length,
                                                  PmProcessView *self) {
   GtkListItemFactory *factory;
   GtkColumnViewColumn *column;
@@ -489,10 +505,12 @@ static GtkColumnViewColumn *create_string_column(const gchar *prop_name,
   UserData *user_data = g_new0(UserData, 1);
   user_data->name = prop_name;
   user_data->suffix = NULL;
+  user_data->length = length;
+  user_data->process_view = self;
 
   factory = gtk_signal_list_item_factory_new();
 
-  g_signal_connect(factory, "setup", G_CALLBACK(setup_generic_column), self);
+  g_signal_connect(factory, "setup", G_CALLBACK(setup_generic_column), user_data);
 
   g_signal_connect(factory, "bind", G_CALLBACK(bind_string_column), user_data);
 
@@ -502,8 +520,8 @@ static GtkColumnViewColumn *create_string_column(const gchar *prop_name,
   column = gtk_column_view_column_new(title, GTK_LIST_ITEM_FACTORY(factory));
 
   // set default column properties
+  gtk_column_view_column_set_fixed_width(column, length * 10);
   gtk_column_view_column_set_resizable(column, true);
-  gtk_column_view_column_set_expand(column, TRUE);
 
   // Setup expression-based sorter
   expr = gtk_property_expression_new(PM_TYPE_PROCESS_ITEM, NULL, prop_name);
@@ -659,27 +677,28 @@ void pm_process_view_init(PmProcessView *self) {
 
   // Append columns
   gtk_column_view_append_column(GTK_COLUMN_VIEW(column_view),
-                                create_first_column("name", "Name", self));
+                                create_first_column("name", "Name", 30, self));
   gtk_column_view_append_column(GTK_COLUMN_VIEW(column_view),
-                                create_string_column("status", "Status", self));
+                                create_string_column("status", "Status", 8, self));
   gtk_column_view_append_column(
       GTK_COLUMN_VIEW(column_view),
-      create_numeric_column("pid", "PID", NULL, INTMAX_MAX, self));
+      create_numeric_column("pid", "PID", NULL, INTMAX_MAX, 10, self));
   gtk_column_view_append_column(
       GTK_COLUMN_VIEW(column_view),
-      create_numeric_column("cpu", "CPU", "%", 100.0, self));
+      create_numeric_column("cpu", "CPU", "%", 100.0, 12, self));
   gtk_column_view_append_column(GTK_COLUMN_VIEW(column_view),
                                 create_numeric_column("memory", "Memory", " MB",
                                                       (double)mem_total / 1e+6,
+                                                      12, 
                                                       self));
   gtk_column_view_append_column(
       GTK_COLUMN_VIEW(column_view),
-      create_numeric_column("disk", "Disk", " MB/s", disk_usage, self));
+      create_numeric_column("disk", "Disk", " MB/s", disk_usage, 12, self));
   gtk_column_view_append_column(GTK_COLUMN_VIEW(column_view),
-                                create_string_column("user", "User", self));
+                                create_string_column("user", "User", 20, self));
   gtk_column_view_append_column(
       GTK_COLUMN_VIEW(column_view),
-      create_string_column("priority", "Priority", self));
+      create_string_column("priority", "Priority", 10, self));
 
   // g_signal_connect(column_view, "map", G_CALLBACK(on_view_map), self);
   g_signal_connect(column_view, "unmap", G_CALLBACK(on_view_unmap), self);

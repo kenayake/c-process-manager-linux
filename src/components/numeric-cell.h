@@ -11,6 +11,6 @@ G_BEGIN_DECLS
 
 G_DECLARE_FINAL_TYPE(PmNumericCell, pm_numeric_cell, PM, NUMERIC_CELL, PmTableCell)
 
-GtkWidget *pm_numeric_cell_new(gdouble raw_value, gdouble max, const gchar *suffix);
+GtkWidget *pm_numeric_cell_new(gdouble raw_value, gdouble max, const gchar *suffix, int max_length);
 
 G_END_DECLS

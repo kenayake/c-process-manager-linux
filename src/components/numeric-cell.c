@@ -130,8 +130,8 @@ static void pm_numeric_cell_init(PmNumericCell *self) {
   g_object_bind_property(self, "raw_value", self, "label", G_BINDING_SYNC_CREATE);
 }
 
-GtkWidget *pm_numeric_cell_new(gdouble raw_value, gdouble max, const gchar *suffix) {
-  PmNumericCell *obj = g_object_new(PM_TYPE_NUMERIC_CELL, "raw_value", raw_value, "max", max, "suffix", suffix, NULL);
+GtkWidget *pm_numeric_cell_new(gdouble raw_value, gdouble max, const gchar *suffix, int max_length) {
+  PmNumericCell *obj = g_object_new(PM_TYPE_NUMERIC_CELL, "raw_value", raw_value, "max", max, "suffix", suffix, "max-length", max_length, NULL);
 
   return GTK_WIDGET(obj);
 }

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
   <template class="PmExpanderCell" parent="GtkBox">
-    <property name="width-request">100</property>
+    <property name="hexpand">true</property>
     <child>
       <object class="GtkTreeExpander" id="expander">
         <property name="indent-for-icon">TRUE</property>
@@ -17,6 +17,9 @@
             <property name="hexpand">true</property>
             <binding name="label">
               <lookup name="label">PmExpanderCell</lookup>
+            </binding>
+            <binding name="max-width-chars">
+              <lookup name="max-length">PmExpanderCell</lookup>
             </binding>
           </object>
         </property>

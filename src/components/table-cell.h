@@ -18,6 +18,6 @@ struct _PmTableCellClass {
   gpointer padding[12];
 };
 
-GtkWidget *pm_table_cell_new(const gchar *label);
+GtkWidget *pm_table_cell_new(const gchar *label, int max_length);
 
 G_END_DECLS

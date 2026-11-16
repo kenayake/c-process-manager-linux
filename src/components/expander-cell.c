@@ -10,6 +10,7 @@ struct _PmExpanderCell {
   gchar *label;
   GtkTreeExpander *expander;
   gboolean hide_expander;
+  gint max_length;
   // GtkWidget *label_widget;
   // GBinding *label_binding;
 };
@@ -18,6 +19,7 @@ enum {
   PROP_0,
   PROP_LABEL,
   PROP_HIDE_EXPANDER,
+  PROP_MAX_LENGTH,
   N_PROPERTIES
 };
 
@@ -40,6 +42,10 @@ static void pm_expander_cell_set_property(GObject *object, guint property_id,
     self->hide_expander = g_value_get_boolean(value);
     break;
 
+  case PROP_MAX_LENGTH:
+    self->max_length = g_value_get_int(value);
+    break;
+
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
     break;
@@ -57,6 +63,10 @@ static void pm_expander_cell_get_property(GObject *object, guint property_id,
 
   case PROP_HIDE_EXPANDER:
     g_value_set_boolean(value, self->hide_expander);
+    break;
+
+  case PROP_MAX_LENGTH:
+    g_value_set_int(value, self->max_length);
     break;
 
   default:
@@ -91,7 +101,11 @@ static void pm_expander_cell_class_init(PmExpanderCellClass *klass) {
   properties[PROP_HIDE_EXPANDER] =
       g_param_spec_boolean("hide-expander", "Hide Expander", "hide expander boolean", false,
                           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
-  
+  properties[PROP_MAX_LENGTH] =
+      g_param_spec_int("max-length", "Max Length", "Maximum label width in characters",
+                       G_MININT, G_MAXINT, 0,
+                       G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+
   g_object_class_install_properties(object_class, N_PROPERTIES, properties);
 
   gtk_widget_class_set_template_from_resource(
@@ -104,13 +118,14 @@ static void pm_expander_cell_class_init(PmExpanderCellClass *klass) {
 static void pm_expander_cell_init(PmExpanderCell *self) {
   self->label = NULL;
   self->hide_expander = FALSE;
+  self->max_length = 0;
 
   gtk_widget_init_template(GTK_WIDGET(self));
   gtk_widget_add_css_class (GTK_WIDGET(self), "expander-cell");
 }
 
-GtkWidget *pm_expander_cell_new(const gchar *label) {
-  PmExpanderCell *self = g_object_new(PM_TYPE_EXPANDER_CELL, "label", label, NULL);
+GtkWidget *pm_expander_cell_new(const gchar *label, int max_length) {
+  PmExpanderCell *self = g_object_new(PM_TYPE_EXPANDER_CELL, "label", label, "max-length", max_length, NULL);
 
   return GTK_WIDGET(self);
 }

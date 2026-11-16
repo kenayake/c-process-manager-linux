@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
   <template class="PmTableCell" parent="GtkBox">
-    <property name="width-request">100</property>
+    <property name="hexpand">true</property>
     <child>
       <object class="GtkLabel">
         <binding name="label">
@@ -18,6 +18,9 @@
         <property name="halign">end</property>
         <property name="hexpand">true</property>
         <property name="ellipsize">start</property>
+        <binding name="max-width-chars">
+          <lookup name="max-length">PmTableCell</lookup>
+        </binding>
       </object>
     </child>
   </template>

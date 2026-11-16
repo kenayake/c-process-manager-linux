@@ -8,9 +8,15 @@
 typedef struct _PmTableCellPrivate PmTableCellPrivate;
 struct _PmTableCellPrivate {
   gchar *label;
+  gint max_width;
 };
 
-enum { PROP_0, PROP_LABEL, N_PROPERTIES };
+enum {
+  PROP_0,
+  PROP_LABEL,
+  PROP_MAX_LENGTH,
+  N_PROPERTIES
+};
 
 static GParamSpec *properties[N_PROPERTIES];
 
@@ -27,6 +33,10 @@ static void pm_table_cell_set_property(GObject *object, guint property_id,
     self_private->label = g_value_dup_string(value);
     break;
 
+  case PROP_MAX_LENGTH:
+    self_private->max_width = g_value_get_int(value);
+    break;
+
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
     break;
@@ -41,6 +51,10 @@ static void pm_table_cell_get_property(GObject *object, guint property_id,
   switch (property_id) {
   case PROP_LABEL:
     g_value_set_string(value, self_private->label);
+    break;
+
+  case PROP_MAX_LENGTH:
+    g_value_set_int(value, self_private->max_width);
     break;
 
   default:
@@ -88,6 +102,10 @@ static void pm_table_cell_class_init(PmTableCellClass *klass) {
   properties[PROP_LABEL] =
       g_param_spec_string("label", "Label", "The table cell label", NULL,
                           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+  properties[PROP_MAX_LENGTH] =
+      g_param_spec_int("max-length", "Max Length", "Maximum label width in characters",
+                       G_MININT, G_MAXINT, 0,
+                       G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   g_object_class_install_properties(object_class, N_PROPERTIES, properties);
 
@@ -101,13 +119,14 @@ static void pm_table_cell_class_init(PmTableCellClass *klass) {
 static void pm_table_cell_init(PmTableCell *self) {
   PmTableCellPrivate *self_private = pm_table_cell_get_instance_private(self);
   self_private->label = NULL;
+  self_private->max_width = 0;
   gtk_widget_init_template(GTK_WIDGET(self));
 
   gtk_widget_add_css_class(GTK_WIDGET(self), "table-cell");
 }
 
-GtkWidget *pm_table_cell_new(const gchar *label) {
-  PmTableCell *self = g_object_new(PM_TYPE_TABLE_CELL, "label", label, NULL);
+GtkWidget *pm_table_cell_new(const gchar *label, int max_length) {
+  PmTableCell *self = g_object_new(PM_TYPE_TABLE_CELL, "label", label, "max-length", max_length, NULL);
 
   return GTK_WIDGET(self);
 }
