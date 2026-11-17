@@ -48,11 +48,11 @@ headerbar, .titlebar {
 .stack-sidebar {
   background-color: var(--surface-color);
   padding: 8px;
-  font-size: larger;
+  font-size: large;
 }
 
 .stack-sidebar button {
-  padding: 8px;
+  padding: 12px;
 }
 
 .stack-sidebar .show-text-toggle {
@@ -95,8 +95,12 @@ entry.search {
 }
 
 .process-header {
-  padding: 16px;
+  padding: 24px;
   border-bottom: 2px solid var(--border-color);
+}
+
+.process-header separator {
+  border-image-width: 4px;
 }
 
 .process-header>label {
@@ -171,15 +175,24 @@ columnview row:selected .accent1 {
 }
 
 /* Settings Page */
-.settings {
+.settings-header {
+  font-weight: 600;
+  font-size: x-large;
+  padding-top: 24px;
+  padding-bottom: 32px;
   padding-left: 32px;
   padding-right: 32px;
+}
+
+.settings-content {
+  padding-left: 32px;
+  padding-right: 32px;
+  margin-bottom: 128px;
 }
 
 .settings-card {
   margin-top: 16px;
   padding: 24px;
-  gap: 16px;
   background-color: var(--card-color);
   border: 1px solid var(--border-color);
   border-radius: 8px;
@@ -189,16 +202,29 @@ columnview row:selected .accent1 {
   margin-right: 32px;
 }
 
-.h1 {
-  font-weight: 600;
-  font-size: xx-large;
-  padding-top: 24px;
+.settings-content expander {
+    min-width: 0px;
+    min-height: 0px;
+    opacity: 0;
+    -gtk-icon-size: 0px;
+}
+
+expander:checked + .settings-card {
+  border-bottom: 2px solid var(--surface-color);
+  border-bottom-left-radius: 0px;
+  border-bottom-right-radius: 0px;
 }
 
 .h2 {
   font-weight: 600;
-  font-size: x-large;
+  font-size: large;
   padding-top: 32px;
+}
+
+.first {
+  font-weight: 600;
+  font-size: large;
+  padding-top: 2px;
 }
 
 .setting-title {
@@ -208,4 +234,39 @@ columnview row:selected .accent1 {
 .setting-subtitle {
   margin-top: 4px;
   color: alpha( var(--text-color) , 0.7);
+}
+
+.checkbox {
+  padding: 24px;
+  background-color: var(--card-color);
+  border-bottom: 2px solid var(--surface-color);
+  border-left: 1px solid var(--border-color);
+  border-right: 1px solid var(--border-color);
+  border-radius: 0px;
+  font-size: large;
+}
+
+.checkbox:last-child {
+  border-bottom: 1px solid var(--border-color);
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+  font-size: large;
+}
+
+.checkbox check{
+  min-width: 24px;
+  min-height: 24px;
+  margin-left: 64px;
+  margin-right: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.settings-button {
+  font-size: large;
+  padding-left: 12px;
+  padding-right: 12px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  border: 2px solid var(--border-color);
+  margin-top: 24px;
 }

@@ -11,7 +11,7 @@
         <property name="css-classes">show-text-toggle</property>
         <property name="child">
           <object class="GtkImage">
-            <property name="icon-name">open-menu-symbolic</property>
+            <property name="icon-name">taskmgr-menu-symbolic</property>
             <binding name="pixel-size">
               <lookup name="icon-size" type="PmStackSidebar"></lookup>
             </binding>

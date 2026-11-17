@@ -4,144 +4,277 @@
     <property name="orientation">vertical</property>
     <property name="vexpand">true</property>
     <property name="hexpand">true</property>
-    <property name="css-classes">settings</property>
     <child>
       <!-- Settings Header -->
       <object class="GtkLabel">
         <property name="label">Settings</property>
-        <property name="css-classes">h1</property>
+        <property name="css-classes">settings-header</property>
         <property name="halign">start</property>
       </object>
     </child>
     <child>
-      <!-- Appearance Section -->
-      <object class="GtkBox">
-        <property name="orientation">vertical</property>
+      <object class="GtkScrolledWindow">
+        <property name="vexpand">true</property>
+        <property name="hexpand">true</property>
         <child>
-          <object class="GtkLabel">
-            <property name="label">Appearance</property>
-            <property name="css-classes">h2</property>
-            <property name="halign">start</property>
-          </object>
-        </child>
-        <child>
-          <!-- App Theme Card -->
           <object class="GtkBox">
-            <property name="css-classes">settings-card</property>
-            <!-- Icon -->
+            <property name="orientation">vertical</property>
+            <property name="css-classes">settings-content</property>
             <child>
-              <object class="GtkImage">
-                <property name="icon-name">applications-graphics-symbolic</property>
-                <property name="icon-size">GTK_ICON_SIZE_LARGE</property>
-              </object>
-            </child>
-            <!-- Settings text -->
-            <child>
+              <!-- Appearance Section -->
               <object class="GtkBox">
                 <property name="orientation">vertical</property>
                 <child>
                   <object class="GtkLabel">
-                    <property name="label">App Theme</property>
-                    <property name="css-classes">setting-title</property>
+                    <property name="label">Appearance</property>
+                    <property name="css-classes">first</property>
                     <property name="halign">start</property>
                   </object>
                 </child>
                 <child>
-                  <object class="GtkLabel">
-                    <property name="label">Select which app theme to display</property>
-                    <property name="css-classes">setting-subtitle</property>
-                    <property name="halign">start</property>
+                  <!-- App Theme Card -->
+                  <object class="PmSettingsDropdownCard">
+                    <property name="title">App Theme</property>
+                    <property name="subtitle">Select which app theme to display</property>
+                    <property name="icon-name">taskmgr-app-theme-symbolic</property>
+                    <property name="child">
+                      <object class="GtkDropDown" id="theme_field">
+                        <property name="valign">center</property>
+                        <property name="model">
+                          <object class="GtkStringList">
+                            <items>
+                              <item translatable="yes">Use system setting</item>
+                              <item translatable="yes">Light</item>
+                              <item translatable="yes">Dark</item>
+                            </items>
+                          </object>
+                        </property>
+                      </object>
+                    </property>
                   </object>
                 </child>
               </object>
             </child>
-            <!-- Spacing -->
             <child>
-              <object class="GtkBox">
-                <property name="hexpand">true</property>
-              </object>
-            </child>
-            <!-- Settings Field -->
-            <child>
-              <object class="GtkDropDown" id="theme_field">
-                <property name="vexpand">false</property>
-                <property name="model">
-                  <object class="GtkStringList">
-                    <items>
-                      <item translatable="yes">Use system setting</item>
-                      <item translatable="yes">Light</item>
-                      <item translatable="yes">Dark</item>
-                    </items>
-                  </object>
-                </property>
-              </object>
-            </child>
-          </object>
-        </child>
-      </object>
-    </child>
-    <child>
-      <!-- General Section -->
-      <object class="GtkBox">
-        <property name="orientation">vertical</property>
-        <child>
-          <object class="GtkLabel">
-            <property name="label">General</property>
-            <property name="css-classes">h2</property>
-            <property name="halign">start</property>
-          </object>
-        </child>
-        <child>
-          <!-- Update Speed Card -->
-          <object class="GtkBox">
-            <property name="css-classes">settings-card</property>
-            <!-- Icon -->
-            <child>
-              <object class="GtkImage">
-                <property name="icon-name">view-refresh</property>
-                <property name="icon-size">GTK_ICON_SIZE_LARGE</property>
-              </object>
-            </child>
-            <!-- Settings text -->
-            <child>
+              <!-- General Section -->
               <object class="GtkBox">
                 <property name="orientation">vertical</property>
                 <child>
                   <object class="GtkLabel">
-                    <property name="label">Real Time Update Speed</property>
-                    <property name="css-classes">setting-title</property>
+                    <property name="label">General</property>
+                    <property name="css-classes">h2</property>
                     <property name="halign">start</property>
                   </object>
                 </child>
                 <child>
+                  <!-- Default Page Card -->
+                  <object class="PmSettingsDropdownCard">
+                    <property name="title">Default Start Page (Dummy)</property>
+                    <property name="subtitle">Specify which page is visible when launching Task Manager</property>
+                    <property name="icon-name">taskmgr-default-start-symbolic</property>
+                    <property name="child">
+                      <object class="GtkDropDown">
+                        <property name="valign">center</property>
+                        <property name="model">
+                          <object class="GtkStringList">
+                            <items>
+                              <item translatable="yes">Processes</item>
+                              <item translatable="yes">Performance</item>
+                              <item translatable="yes">App History</item>
+                              <item translatable="yes">Startup Apps</item>
+                              <item translatable="yes">Users</item>
+                              <item translatable="yes">Details</item>
+                              <item translatable="yes">Services</item>
+                            </items>
+                          </object>
+                        </property>
+                      </object>
+                    </property>
+                  </object>
+                </child>
+                <child>
+                  <!-- Update Speed Card -->
+                  <object class="PmSettingsDropdownCard">
+                    <property name="title">Real Time Update Speed</property>
+                    <property name="subtitle">Choose how often to update the system resource usage report</property>
+                    <property name="icon-name">taskmgr-update-speed-symbolic</property>
+                    <property name="child">
+                      <object class="GtkDropDown" id="refresh_field">
+                        <property name="valign">center</property>
+                        <property name="model">
+                          <object class="GtkStringList">
+                            <items>
+                              <item translatable="yes">1 second</item>
+                              <item translatable="yes">2 seconds</item>
+                              <item translatable="yes">3 seconds</item>
+                              <item translatable="yes">5 seconds</item>
+                            </items>
+                          </object>
+                        </property>
+                      </object>
+                    </property>
+                  </object>
+                </child>
+                <child>
+                  <!-- Window Management Card -->
+                  <object class="PmSettingsChecklistCard">
+                    <property name="title">Window management (Dummy)</property>
+                    <property name="subtitle">Specify default Task Manager window behavior</property>
+                    <property name="icon-name">taskmgr-window-management-symbolic</property>
+                    <property name="child">
+                      <object class="GtkBox">
+                        <property name="orientation">vertical</property>
+                        <child>
+                          <object class="GtkCheckButton">
+                            <property name="css-classes">checkbox</property>
+                            <property name="label">Always on top</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkCheckButton">
+                            <property name="css-classes">checkbox</property>
+                            <property name="label">Minimize on use</property>
+                            <property name="active">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkCheckButton">
+                            <property name="css-classes">checkbox</property>
+                            <property name="label">Hide when minimized</property>
+                          </object>
+                        </child>
+                      </object>
+                    </property>
+                  </object>
+                </child>
+                <child>
+                  <!-- Other options Card -->
+                  <object class="PmSettingsChecklistCard">
+                    <property name="title">Other Options (Dummy)</property>
+                    <property name="subtitle">Show full account name, show history for all processes, confirmation dialog settings</property>
+                    <property name="icon-name">taskmgr-other-settings-symbolic</property>
+                    <property name="child">
+                      <object class="GtkBox">
+                        <property name="orientation">vertical</property>
+                        <child>
+                          <object class="GtkCheckButton">
+                            <property name="css-classes">checkbox</property>
+                            <property name="label">Show full account name</property>
+                            <property name="active">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkCheckButton">
+                            <property name="css-classes">checkbox</property>
+                            <property name="label">Show history for all processes</property>
+                            <property name="active">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkCheckButton">
+                            <property name="css-classes">checkbox</property>
+                            <property name="label">Ask me before applying Efficiency mode</property>
+                            <property name="active">true</property>
+                          </object>
+                        </child>
+                      </object>
+                    </property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <!-- Advanced Section -->
+              <object class="GtkBox">
+                <property name="orientation">vertical</property>
+                <child>
                   <object class="GtkLabel">
-                    <property name="label">Choose how often to update the system resource usage report</property>
-                    <property name="css-classes">setting-subtitle</property>
+                    <property name="label">Advanced</property>
+                    <property name="css-classes">h2</property>
+                    <property name="halign">start</property>
+                  </object>
+                </child>
+                <child>
+                  <!-- Memory Dump Card -->
+                  <object class="PmSettingsChecklistCard">
+                    <property name="title">Live kernel memory dump options (Dummy)</property>
+                    <property name="subtitle">Abort if insufficient memory, capture Hypervisor pages, include nonessential pages, capture user pages</property>
+                    <property name="icon-name">taskmgr-memory-dump-symbolic</property>
+                    <property name="child">
+                      <object class="GtkBox">
+                        <property name="orientation">vertical</property>
+                        <child>
+                          <object class="GtkCheckButton">
+                            <property name="css-classes">checkbox</property>
+                            <property name="label">Abort if insufficient memory</property>
+                            <property name="active">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkCheckButton">
+                            <property name="css-classes">checkbox</property>
+                            <property name="label">Capture Hypervisor pages</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkCheckButton">
+                            <property name="css-classes">checkbox</property>
+                            <property name="label">Include nonessential pages</property>
+                            <property name="sensitive">false</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkCheckButton">
+                            <property name="css-classes">checkbox</property>
+                            <property name="label">Capture user pages</property>
+                          </object>
+                        </child>
+                      </object>
+                    </property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <!-- Reset Section -->
+              <object class="GtkBox">
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label">Reset Settings (Dummy)</property>
+                    <property name="css-classes">h2</property>
+                    <property name="halign">start</property>
+                  </object>
+                </child>
+                <child>
+                  <!-- Reset Button -->
+                  <object class="GtkButton">
+                    <property name="label">Reset all settings to default</property>
+                    <property name="css-classes">settings-button</property>
                     <property name="halign">start</property>
                   </object>
                 </child>
               </object>
             </child>
-            <!-- Spacing -->
             <child>
+              <!-- Feedback Section -->
               <object class="GtkBox">
-                <property name="hexpand">true</property>
-              </object>
-            </child>
-            <!-- Settings Field -->
-            <child>
-              <object class="GtkDropDown" id="refresh_field">
-                <property name="vexpand">false</property>
-                <property name="model">
-                  <object class="GtkStringList">
-                    <items>
-                      <item translatable="yes">1 second</item>
-                      <item translatable="yes">2 seconds</item>
-                      <item translatable="yes">3 seconds</item>
-                      <item translatable="yes">5 seconds</item>
-                    </items>
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label">Feedback (Dummy)</property>
+                    <property name="css-classes">h2</property>
+                    <property name="halign">start</property>
                   </object>
-                </property>
+                </child>
+                <child>
+                  <!-- Feedback Button -->
+                  <object class="GtkButton">
+                    <property name="label">Send feedback</property>
+                    <property name="css-classes">settings-button</property>
+                    <property name="halign">start</property>
+                  </object>
+                </child>
               </object>
             </child>
           </object>

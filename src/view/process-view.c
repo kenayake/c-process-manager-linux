@@ -438,6 +438,7 @@ static GtkColumnViewColumn *create_first_column(const gchar *prop_name,
   // set default column properties
   gtk_column_view_column_set_fixed_width(column, length * 10);
   gtk_column_view_column_set_resizable(column, true);
+  gtk_column_view_column_set_expand(column, TRUE);
 
   // Setup expression-based sorter
   expr = gtk_property_expression_new(PM_TYPE_PROCESS_ITEM, NULL, prop_name);

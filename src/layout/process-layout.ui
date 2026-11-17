@@ -24,7 +24,8 @@
             <property name="spacing">8</property>
             <child>
               <object class="PmIconButton" id="add_process_button">
-                <property name="icon-name">tab-new-symbolic</property>
+                <property name="icon-name">taskmgr-run-new-task-symbolic</property>
+                <property name="icon-size">24</property>
                 <property name="text">Run new task</property>
               </object>
             </child>
@@ -35,7 +36,8 @@
             </child>
             <child>
               <object class="PmIconButton" id="end_process_button">
-                <property name="icon-name">process-stop</property>
+                <property name="icon-name">taskmgr-end-task-symbolic</property>
+                <property name="icon-size">24</property>
                 <property name="text">End task</property>
               </object>
             </child>

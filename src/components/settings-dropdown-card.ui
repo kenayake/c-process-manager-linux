@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="PmSettingsDropdownCard" parent="GtkBox">
+    <property name="css-classes">settings-card</property>
+    <child>
+      <object class="GtkImage" id="icon">
+        <property name="icon-size">GTK_ICON_SIZE_LARGE</property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkBox">
+        <property name="orientation">vertical</property>
+        <child>
+          <object class="GtkLabel" id="title_label">
+            <property name="css-classes">setting-title</property>
+            <property name="halign">start</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkLabel" id="subtitle_label">
+            <property name="css-classes">setting-subtitle</property>
+            <property name="halign">start</property>
+            <property name="wrap">true</property>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="GtkBox">
+        <property name="hexpand">true</property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkBox" id="content_box" />
+    </child>
+  </template>
+</interface>

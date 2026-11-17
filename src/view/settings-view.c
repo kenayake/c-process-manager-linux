@@ -4,6 +4,8 @@
 #include "glib.h"
 #include "gtk/gtk.h"
 #include "gtk/gtkdropdown.h"
+#include "components/settings-checklist-card.h"
+#include "components/settings-dropdown-card.h"
 
 struct _PmSettingsView {
   GtkBox parent_instance;
@@ -63,6 +65,9 @@ static void on_refresh_changed(GtkDropDown *self, GParamSpec *pspec, gpointer us
 }
 
 static void pm_settings_view_class_init(PmSettingsViewClass *klass) {
+  g_type_ensure(PM_TYPE_SETTINGS_DROPDOWN_CARD);
+  g_type_ensure(PM_TYPE_SETTINGS_CHECKLIST_CARD);
+
   gtk_widget_class_set_template_from_resource(
       GTK_WIDGET_CLASS(klass),
       "/com/github/kenayake/ProcessManager/view/settings-view.ui");

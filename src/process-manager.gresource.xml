@@ -11,13 +11,35 @@
     <file preprocess="xml-stripblanks">components/run-window.ui</file>
     <file preprocess="xml-stripblanks">components/icon-button.ui</file>
     <file preprocess="xml-stripblanks">components/stack-sidebar.ui</file>
+    <file preprocess="xml-stripblanks">components/settings-dropdown-card.ui</file>
+    <file preprocess="xml-stripblanks">components/settings-checklist-card.ui</file>
     <file preprocess="xml-stripblanks">layout/process-layout.ui</file>
     <file preprocess="xml-stripblanks">layout/app-layout.ui</file>
     <file preprocess="xml-stripblanks">view/process-view.ui</file>
     <file preprocess="xml-stripblanks">view/settings-view.ui</file>
 
     <!-- Images -->
-    <file>images/logo_large.png</file>
-    <file>images/logo_small.png</file>
+    <file>static/images/logo_large.png</file>
+    <file>static/images/logo_small.png</file>
+
+    <!-- Icons -->
+    <file alias="/icons/scalable/actions/taskmgr-app-history-symbolic.svg">static/icons/scalable/actions/taskmgr-app-history-symbolic.svg</file>
+    <file alias="/icons/scalable/actions/taskmgr-app-theme-symbolic.svg">static/icons/scalable/actions/taskmgr-app-theme-symbolic.svg</file>
+    <file alias="/icons/scalable/actions/taskmgr-default-start-symbolic.svg">static/icons/scalable/actions/taskmgr-default-start-symbolic.svg</file>
+    <file alias="/icons/scalable/actions/taskmgr-details-symbolic.svg">static/icons/scalable/actions/taskmgr-details-symbolic.svg</file>
+    <file alias="/icons/scalable/actions/taskmgr-end-task-symbolic.svg">static/icons/scalable/actions/taskmgr-end-task-symbolic.svg</file>
+    <file alias="/icons/scalable/actions/taskmgr-memory-dump-symbolic.svg">static/icons/scalable/actions/taskmgr-memory-dump-symbolic.svg</file>
+    <file alias="/icons/scalable/actions/taskmgr-menu-symbolic.svg">static/icons/scalable/actions/taskmgr-menu-symbolic.svg</file>
+    <file alias="/icons/scalable/actions/taskmgr-other-settings-symbolic.svg">static/icons/scalable/actions/taskmgr-other-settings-symbolic.svg</file>
+    <file alias="/icons/scalable/actions/taskmgr-performance-symbolic.svg">static/icons/scalable/actions/taskmgr-performance-symbolic.svg</file>
+    <file alias="/icons/scalable/actions/taskmgr-processes-symbolic.svg">static/icons/scalable/actions/taskmgr-processes-symbolic.svg</file>
+    <file alias="/icons/scalable/actions/taskmgr-run-new-task-symbolic.svg">static/icons/scalable/actions/taskmgr-run-new-task-symbolic.svg</file>
+    <file alias="/icons/scalable/actions/taskmgr-services-symbolic.svg">static/icons/scalable/actions/taskmgr-services-symbolic.svg</file>
+    <file alias="/icons/scalable/actions/taskmgr-settings-symbolic.svg">static/icons/scalable/actions/taskmgr-settings-symbolic.svg</file>
+    <file alias="/icons/scalable/actions/taskmgr-startup-apps-symbolic.svg">static/icons/scalable/actions/taskmgr-startup-apps-symbolic.svg</file>
+    <file alias="/icons/scalable/actions/taskmgr-update-speed-symbolic.svg">static/icons/scalable/actions/taskmgr-update-speed-symbolic.svg</file>
+    <file alias="/icons/scalable/actions/taskmgr-users-symbolic.svg">static/icons/scalable/actions/taskmgr-users-symbolic.svg</file>
+    <file alias="/icons/scalable/actions/taskmgr-window-management-symbolic.svg">static/icons/scalable/actions/taskmgr-window-management-symbolic.svg</file>
+    <file alias="/icons/index.theme">static/icons/index.theme</file>
   </gresource>
 </gresources>

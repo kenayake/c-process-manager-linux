@@ -313,7 +313,7 @@ static void pm_stack_sidebar_class_init(PmStackSidebarClass *klass) {
 }
 
 static void pm_stack_sidebar_init(PmStackSidebar *self) {
-  self->icon_size = 24;
+  self->icon_size = 28;
 
   gtk_widget_init_template(GTK_WIDGET(self));
   g_signal_connect(self->show_text_toggle, "toggled",

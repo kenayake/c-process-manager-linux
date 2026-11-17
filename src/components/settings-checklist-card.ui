@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="PmSettingsChecklistCard" parent="GtkBox">
+    <property name="hexpand">true</property>
+    <child>
+      <object class="GtkExpander" id="expander">
+        <property name="hexpand">true</property>
+        <property name="label-widget">
+          <object class="GtkBox" id="header_box">
+            <property name="css-classes">settings-card</property>
+            <property name="hexpand">true</property>
+            <child>
+              <object class="GtkImage" id="icon">
+                <property name="icon-size">GTK_ICON_SIZE_LARGE</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkBox">
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkLabel" id="title_label">
+                    <property name="css-classes">setting-title</property>
+                    <property name="halign">start</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="subtitle_label">
+                    <property name="css-classes">setting-subtitle</property>
+                    <property name="halign">start</property>
+                    <property name="wrap">true</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkBox">
+                <property name="hexpand">true</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkImage" id="toggle_chevron">
+                <property name="icon-name">go-up-symbolic</property>
+              </object>
+            </child>
+          </object>
+        </property>
+      </object>
+    </child>
+  </template>
+</interface>

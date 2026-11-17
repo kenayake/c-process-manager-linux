@@ -15,18 +15,6 @@
         <property name="vexpand">true</property>
         <property name="hexpand">true</property>
         <property name="css-classes">layout-stack</property>
-        <!-- <child>
-          <object class="GtkStackPage">
-            <property name="name">settings</property>
-            <property name="title">Settings</property>
-            <property name="icon-name">emblem-system-symbolic</property>
-            <property name="child">
-              <object class="GtkLabel">
-                <property name="label">i like turtles</property>
-              </object>
-            </property>
-          </object>
-        </child> -->
       </object>
     </child>
   </template>

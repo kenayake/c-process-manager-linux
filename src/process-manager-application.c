@@ -147,6 +147,7 @@ static gboolean on_timeout_tick(gpointer user_data) {
   return FALSE;
 }
 
+// For Testing
 static void on_startup(ProcessManagerApplication *self, GtkWindow *window,
                        gpointer user_data) {
   g_timeout_add(60000, on_timeout_tick, self);

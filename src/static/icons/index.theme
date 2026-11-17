@@ -1,0 +1,13 @@
+[Icon Theme]
+Name=Fluent Task Manager
+Comment=Fluent UI System Icons for Task Manager style system monitors
+Inherits=hicolor
+Example=utilities-system-monitor
+Directories=scalable/actions
+
+[scalable/actions]
+Size=24
+MinSize=8
+MaxSize=512
+Type=Scalable
+Context=Actions

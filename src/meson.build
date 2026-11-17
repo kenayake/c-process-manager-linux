@@ -22,6 +22,8 @@ process_manager_sources = [
   'components/numeric-cell.c',
   'components/icon-button.c',
   'components/stack-sidebar.c',
+  'components/settings-dropdown-card.c',
+  'components/settings-checklist-card.c',
 ]
 
 process_manager_deps = [
